@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h> // Added for process management
@@ -65,98 +66,149 @@ void print_board(Board* board) {
     printf("=================================\n");
 }
 
+void print_board_json(Board* board) {
+    printf("{\n");
+    printf("  \"size\": %d,\n", board->size);
+    printf("  \"solved\": %s,\n", is_board_solved(board) ? "true" : "false");
+    
+    // 1. Print the Grid state
+    printf("  \"grid\": [\n");
+    for (int i = 0; i < board->size; i++) {
+        printf("    [");
+        for (int j = 0; j < board->size; j++) {
+            printf("%d%s", board->grid[i][j].value, (j < board->size - 1) ? ", " : "");
+        }
+        printf("]%s\n", (i < board->size - 1) ? "," : "");
+    }
+    printf("  ],\n");
+
+    // 2. Print the Cages and Rules
+    printf("  \"cages\": [\n");
+    for (int i = 0; i < board->num_cages; i++) {
+        Cage* c = &board->cages[i];
+        
+        // Handle the 'no operator' case for JSON clarity
+        char op_str[2] = {get_op_char(c->op), '\0'};
+        if (op_str[0] == ' ') op_str[0] = '.'; 
+        
+        printf("    { \"target\": %d, \"op\": \"%s\", \"cells\": [", c->target_value, op_str);
+        for (int j = 0; j < c->num_cells; j++) {
+            printf("[%d, %d]%s", c->cells[j]->row, c->cells[j]->col, (j < c->num_cells - 1) ? ", " : "");
+        }
+        printf("] }%s\n", (i < board->num_cages - 1) ? "," : "");
+    }
+    printf("  ],\n");
+
+    // 3. Print the Hint State
+    printf("  \"hint\": { \"ready\": %s", board->hint_ready ? "true" : "false");
+    if (board->hint_ready && board->hint_val != -1) {
+        printf(", \"row\": %d, \"col\": %d, \"val\": %d", board->hint_row, board->hint_col, board->hint_val);
+    }
+    printf(" }\n");
+
+    printf("}\n");
+    fflush(stdout); // Force the JSON to print immediately for the Python server
+}
+
 int main(int argc, char* argv[]) {
-    if (argc != 2) {
-        printf("Usage: %s <puzzle_file.txt>\n", argv[0]);
+    // Check for standard mode OR web mode
+    if (argc < 2 || argc > 3) {
+        printf("Usage: %s <puzzle_file.txt> [--web]\n", argv[0]);
         return 1;
+    }
+
+    // Check if the --web flag was passed
+    bool web_mode = false;
+    if (argc == 3 && strcmp(argv[2], "--web") == 0) {
+        web_mode = true;
     }
 
     Board* board = load_puzzle(argv[1]);
     if (!board) return 1;
 
-    // 1. Signal Timers
-    signal(SIGALRM, handle_timeout);
-    
-    // Tell the OS to automatically reap child processes (prevents zombies)
-    signal(SIGCHLD, SIG_IGN); 
-
-    int time_limit_seconds = 600; 
-    printf("\nStarting game with a %d second time limit...\n", time_limit_seconds);
-    alarm(time_limit_seconds); 
+    // We only want the signal timer going off in human mode
+    if (!web_mode) {
+        signal(SIGALRM, handle_timeout);
+        signal(SIGCHLD, SIG_IGN); 
+        int time_limit_seconds = 600; 
+        printf("\nStarting game with a %d second time limit...\n", time_limit_seconds);
+        alarm(time_limit_seconds); 
+    }
 
     bool playing = true;
     int r, c, v;
 
     while (playing && !timeout_flag) {
-        print_board(board);
         
-        if (is_board_solved(board)) {
-            alarm(0); 
-            printf("\n🎉 CONGRATULATIONS! You solved the puzzle! 🎉\n");
-            break;
-        }
-
-        if (board->hint_ready) {
-            if (board->hint_val != -1) {
-                printf("\n[Hint System] 💡 Try placing a %d at Row %d, Col %d.\n", 
-                       board->hint_val, board->hint_row, board->hint_col);
-            } else {
-                printf("\n[Hint System] 💡 No obvious hints available right now.\n");
+        // Draw the board based on the mode
+        if (web_mode) {
+            print_board_json(board);
+        } else {
+            print_board(board);
+            
+            // Print Human Hints and Menus
+            if (board->hint_ready) {
+                if (board->hint_val != -1) {
+                    printf("\n[Hint System] 💡 Try placing a %d at Row %d, Col %d.\n", 
+                           board->hint_val, board->hint_row, board->hint_col);
+                } else {
+                    printf("\n[Hint System] 💡 No obvious hints available right now.\n");
+                }
+                board->hint_ready = 0; 
             }
-            board->hint_ready = 0; // Reset the flag so it only prints once
+            
+            printf("\nCommands:\n");
+            printf("- Place a number: <row> <col> <value>\n");
+            printf("- Clear a cell:   <row> <col> 0\n");
+            printf("- Get a Hint:     88 88 88\n");
+            printf("- Save game:      99 99 99\n");
+            printf("- Quit game:      -1 -1 -1\n");
+            printf("Enter command: ");
         }
-        
-        printf("\nCommands:\n");
-        printf("- Place a number: <row> <col> <value>\n");
-        printf("- Clear a cell:   <row> <col> 0\n");
-        printf("- Save game:      99 99 99\n");
-        printf("- Get a Hint:     88 88 88\n"); // New command UI
-        printf("- Quit game:      -1 -1 -1\n");
-        printf("Enter command: ");
 
+        // Wait for input (from the human OR the python server)
         if (scanf("%d %d %d", &r, &c, &v) != 3) {
             if (timeout_flag) break; 
-            printf("\nInvalid input. Please enter three numbers.\n");
+            if (!web_mode) printf("\nInvalid input. Please enter three numbers.\n");
             while(getchar() != '\n'); 
             continue;
         }
 
+        // Handle commands silently if in web mode
         if (r == -1 && c == -1 && v == -1) {
-            printf("\nExiting game...\n");
+            if (!web_mode) printf("\nExiting game...\n");
             playing = false;
             break;
         }
 
-        // 2. The Process Forking Logic
         if (r == 99 && c == 99 && v == 99) {
             pid_t pid = fork();
-            
-            if (pid < 0) {
-                // Fork failed
-                printf("\n[Error] Could not create background process to save.\n");
-            } 
-            else if (pid == 0) {
-                // THIS IS THE CHILD PROCESS
+            if (pid == 0) {
                 save_game_state(board);
-                exit(0); // The child must exit after saving, otherwise you get two games running!
-            } 
-            else {
-                // THIS IS THE PARENT PROCESS
+                exit(0); 
+            } else if (!web_mode && pid > 0) {
                 printf("\n[Auto-Save] Saving game state in the background...\n");
             }
-            continue; // Skip the rest of the loop and draw the board again
+            continue; 
         }
 
-        // 3. The Thread Launching Logic
         if (r == 88 && c == 88 && v == 88) {
             get_hint_concurrent(board);
-            continue; // Skip drawing the board again so it doesn't interrupt the user
+            // In web mode, we need a slight delay to ensure the thread finishes
+            // before it loops back around to print the JSON with the hint included.
+            if (web_mode) usleep(10000); // Wait 10 milliseconds
+            continue; 
         }
 
-        // Standard move placement
+        // Apply move
         if (place_number(board, r, c, v)) {
-            printf("\nMove accepted!\n");
+            if (!web_mode) printf("\nMove accepted!\n");
         }
+    }
+
+    if (!web_mode && is_board_solved(board)) {
+        alarm(0);
+        printf("\n🎉 CONGRATULATIONS! You solved the puzzle! 🎉\n");
     }
 
     free_board(board);

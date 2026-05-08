@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KenKen Web Edition</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+        }
+        h1 { margin-bottom: 5px; }
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            gap: 15px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            transition: background 0.2s;
+        }
+        button:hover { background-color: #45a049; }
+        button.action-btn { background-color: #008CBA; }
+        button.action-btn:hover { background-color: #0073e6; }
+        
+        #status-bar {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            min-height: 24px;
+            color: #d9534f;
+        }
+        
+        /* The Grid Container */
+        #board {
+            display: grid;
+            gap: 2px;
+            background-color: #333;
+            border: 4px solid #333;
+            padding: 2px;
+            border-radius: 8px;
+        }
+        
+        /* Individual Cells */
+        .cell {
+            position: relative;
+            width: 70px;
+            height: 70px;
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .cage-label {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .cell input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+            color: #222;
+            outline: none;
+        }
+        /* Hide the annoying arrows on number inputs */
+        .cell input::-webkit-outer-spin-button,
+        .cell input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>KenKen: Systems Programming</h1>
+    <p>Powered by C, POSIX Threads, and Python</p>
+
+    <div class="controls">
+        <button onclick="startGame()">Restart / Load Puzzle</button>
+        <button class="action-btn" onclick="sendCommand(88, 88, 88)">💡 Get Hint</button>
+        <button class="action-btn" onclick="sendCommand(99, 99, 99)">💾 Auto-Save</button>
+    </div>
+
+    <div id="status-bar">Waiting to start...</div>
+
+    <div id="board"></div>
+
+    <script>
+        // A list of distinct pastel colors for our cages
+        const colors = ["#FFB3BA", "#FFDFBA", "#FFFFBA", "#BAFFC9", "#BAE1FF", "#E8BAFF", "#FFBAE8", "#D4F0F0", "#F3E5AB", "#FFD1DC"];
+
+        // Start a fresh game by hitting our Python API
+        async function startGame() {
+            document.getElementById('status-bar').innerText = "Loading game engine...";
+            document.getElementById('status-bar').style.color = "#333";
+            const response = await fetch('/api/start', { method: 'POST' });
+            const data = await response.json();
+            renderBoard(data);
+        }
+
+        // Send a move, hint, or save command to the C program
+        async function sendCommand(r, c, v) {
+            const response = await fetch('/api/command', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ row: r, col: c, val: v })
+            });
+            const data = await response.json();
+            renderBoard(data);
+        }
+
+        // Draws the JSON data onto the screen
+        function renderBoard(data) {
+            const boardDiv = document.getElementById('board');
+            const statusBar = document.getElementById('status-bar');
+            
+            // Set grid dimensions dynamically based on C program output
+            boardDiv.style.gridTemplateColumns = `repeat(${data.size}, 70px)`;
+            boardDiv.innerHTML = ''; // Clear old board
+
+            // Map each cell coordinate to its specific cage so we know how to color it
+            const cellToCage = {};
+            data.cages.forEach((cage, idx) => {
+                cage.cells.forEach((coords, i) => {
+                    const r = coords[0];
+                    const c = coords[1];
+                    // The first cell in the array gets the math label
+                    cellToCage[`${r}-${c}`] = { 
+                        cageIdx: idx, 
+                        isFirst: i === 0, 
+                        target: cage.target, 
+                        op: cage.op 
+                    };
+                });
+            });
+
+            // Build the HTML grid
+            for(let r = 0; r < data.size; r++) {
+                for(let c = 0; c < data.size; c++) {
+                    const cellDiv = document.createElement('div');
+                    cellDiv.className = 'cell';
+                    
+                    const cageInfo = cellToCage[`${r}-${c}`];
+                    
+                    // Assign a color based on the cage index
+                    cellDiv.style.backgroundColor = colors[cageInfo.cageIdx % colors.length];
+
+                    // Add the math rule (e.g. "4+") if it's the first cell in the cage
+                    if (cageInfo.isFirst) {
+                        const label = document.createElement('div');
+                        label.className = 'cage-label';
+                        label.innerText = `${cageInfo.target}${cageInfo.op !== '.' ? cageInfo.op : ''}`;
+                        cellDiv.appendChild(label);
+                    }
+
+                    // Create the input box for typing numbers
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    
+                    // Only show a number if it's not 0
+                    input.value = data.grid[r][c] === 0 ? '' : data.grid[r][c];
+
+                    // When the user types a number, send it to the C backend!
+                    input.onchange = (e) => {
+                        let val = parseInt(e.target.value);
+                        if(isNaN(val)) val = 0; // If they delete the number, send 0 to clear
+                        sendCommand(r, c, val);
+                    };
+
+                    cellDiv.appendChild(input);
+                    boardDiv.appendChild(cellDiv);
+                }
+            }
+
+            // --- Update the Status Bar ---
+            if (data.solved) {
+                statusBar.innerText = "🎉 CONGRATULATIONS! You solved the puzzle! 🎉";
+                statusBar.style.color = "#4CAF50";
+                // Lock the board
+                const inputs = document.querySelectorAll('.cell input');
+                inputs.forEach(input => input.disabled = true);
+            } 
+            else if (data.hint.ready) {
+                if (data.hint.val !== -1) {
+                    statusBar.innerText = `💡 Try placing a ${data.hint.val} at Row ${data.hint.row}, Col ${data.hint.col}.`;
+                    statusBar.style.color = "#008CBA";
+                } else {
+                    statusBar.innerText = "💡 No obvious hints available right now.";
+                    statusBar.style.color = "#d9534f";
+                }
+            } else {
+                statusBar.innerText = "Game in progress...";
+                statusBar.style.color = "#333";
+            }
+        }
+        
+        // Auto-start the game when the page loads
+        window.onload = startGame;
+    </script>
+</body>
+</html>
