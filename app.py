@@ -12,6 +12,10 @@ def index():
     # This will load your HTML game interface (we will build this next)
     return render_template('index.html')
 
+@app.route('/game.html')
+def game_page():
+    return render_template('game.html')
+
 @app.route('/api/start', methods=['POST'])
 def start_game():
     global game_process
@@ -20,18 +24,28 @@ def start_game():
     if game_process:
         game_process.terminate()
         
-    # Spawn the C program with the --web flag!
+    # 1. Get the requested grid size from the frontend (default to 3)
+    data = request.json or {}
+    size = data.get('size', 3)
+    
+    # 2. RUN THE GENERATOR FIRST!
+    # We use subprocess.run to make Python pause and wait until the C program finishes generating
+    print(f"Generating new {size}x{size} puzzle...")
+    subprocess.run(['./kenken', '--generate', str(size)])
+    
+    # 3. Spawn the C game engine using the newly generated file
+    file_path = f'test_cases/generated_{size}x{size}.txt'
+    
     game_process = subprocess.Popen(
-        ['./kenken', 'test_cases/puzzle_3x3_1.txt', '--web'],
+        ['./kenken', file_path, '--web'],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        text=True, # Allows us to send/receive normal strings instead of raw bytes
-        bufsize=1  # Line buffered so it doesn't get stuck
+        text=True, 
+        bufsize=1  
     )
     
-    # The C program instantly outputs the initial JSON board state. 
-    # We read it line by line until we hit the closing bracket '}'
+    # Read the initial JSON board state
     initial_state = ""
     for line in iter(game_process.stdout.readline, ''):
         initial_state += line

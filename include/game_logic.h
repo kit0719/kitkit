@@ -83,4 +83,7 @@ bool check_cage_math(Cage* cage);
 // Scans the entire board to see if all cells are filled and all cages are valid
 bool is_board_solved(Board* board);
 
+// Procedural Generation
+void generate_puzzle(int size);
+
 #endif // GAME_LOGIC_H

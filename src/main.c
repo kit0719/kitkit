@@ -111,6 +111,20 @@ void print_board_json(Board* board) {
 }
 
 int main(int argc, char* argv[]) {
+    // NEW: Check for the generator flag
+    if (argc == 3 && strcmp(argv[1], "--generate") == 0) {
+        int size = atoi(argv[2]);
+        if (size < 3 || size > 9) {
+            printf("Error: Generator size must be between 3 and 9.\n");
+            return 1;
+        }
+        
+        // Actually call the generator engine!
+        generate_puzzle(size);
+        
+        return 0; // Exit the program immediately after generating
+    }
+
     // Check for standard mode OR web mode
     if (argc < 2 || argc > 3) {
         printf("Usage: %s <puzzle_file.txt> [--web]\n", argv[0]);

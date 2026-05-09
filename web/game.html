@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game · KenKen</title>
+  <style>
+    :root {
+      --osu-pink: #ff66aa;
+      --osu-dark: #1a1a1a;
+      --osu-darker: #111111;
+      --osu-text: #e1e1e1;
+      --font-sf: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --font-mono: "SF Camera", "SF Compact Rounded", "SF Mono", "Roboto Mono", monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      background: #0d0d0d; color: var(--osu-text); display: flex;
+      flex-direction: column; align-items: center; min-height: 100vh;
+      font-family: var(--font-sf); -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── top navigation bar ── */
+    .top-nav {
+      width: 100%; max-width: 900px; display: flex; justify-content: space-between;
+      align-items: center; padding: 20px 30px; gap: 16px; margin-bottom: 20px;
+    }
+    .nav-left { display: flex; align-items: center; gap: 16px; }
+    .signin-btn {
+      background: transparent; border: 1px solid #444; color: #ddd;
+      padding: 8px 18px; border-radius: 8px; cursor: pointer;
+      font-weight: 600; font-size: 0.85rem; transition: 0.2s;
+    }
+    .signin-btn:hover { border-color: var(--osu-pink); color: var(--osu-pink); }
+    .money-badge {
+      font-size: 0.9rem; color: #00dfc0; background: #222; padding: 6px 16px;
+      border-radius: 20px; display: flex; align-items: center; gap: 6px; font-weight: 600;
+    }
+    .money-badge svg { width: 18px; height: 18px; }
+
+    .nav-right { display: flex; gap: 12px; }
+    .nav-icon {
+      position: relative; background: transparent; border: 1px solid #444;
+      color: #ddd; width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: 0.2s;
+    }
+    .nav-icon svg { width: 20px; height: 20px; }
+    .nav-icon:hover { border-color: var(--osu-pink); color: var(--osu-pink); background: rgba(255, 102, 170, 0.1); }
+    .nav-icon::after {
+      content: attr(data-tooltip); position: absolute; bottom: -28px; left: 50%;
+      transform: translateX(-50%); background: #333; color: #eee; padding: 4px 10px;
+      border-radius: 6px; font-size: 0.75rem; white-space: nowrap; opacity: 0;
+      pointer-events: none; transition: opacity 0.2s; z-index: 10;
+    }
+    .nav-icon:hover::after { opacity: 1; }
+
+    /* ── Layout (Back btn + Content) ── */
+    .page-layout {
+      display: flex; gap: 20px; align-items: flex-start; justify-content: center;
+      width: 100%; max-width: 900px; padding: 0 20px;
+    }
+
+    .back-btn {
+      width: 56px; height: 56px; background: #222; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: #ddd; box-shadow: 0 4px 12px rgba(0,0,0,0.5); cursor: pointer;
+      border: 2px solid #444; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      flex-shrink: 0;
+    }
+    .back-btn svg { width: 24px; height: 24px; }
+    .back-btn:hover {
+      background: var(--osu-pink); border-color: var(--osu-pink);
+      color: #fff; transform: scale(1.05) translateX(-3px);
+    }
+
+    .main-wrapper { flex: 1; max-width: 700px; display: flex; flex-direction: column; gap: 24px; }
+
+    .game-container {
+      background: var(--osu-dark); border-radius: 16px; padding: 28px 24px 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+
+    /* ── header ── */
+    .game-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 32px; position: relative; 
+    }
+    .header-icons { display: flex; gap: 12px; z-index: 10; }
+    .icon-btn {
+      background: transparent; border: 2px solid #444; color: #ddd;
+      width: 48px; height: 48px; border-radius: 12px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: 0.2s;
+    }
+    .icon-btn svg { width: 22px; height: 22px; }
+    .icon-btn:hover { border-color: #00dfc0; color: #00dfc0; }
+    
+    .timer-display {
+      font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+      font-size: 2.2rem; font-weight: 700; letter-spacing: 1px;
+      background: #222; padding: 4px 24px; border-radius: 30px;
+      color: #00dfc0; transition: color 0.3s; position: absolute;
+      left: 50%; transform: translateX(-50%); z-index: 5;
+    }
+    .timer-display.red { color: #ff4d4d; }
+
+    /* ── grid ── */
+        .grid-wrapper { display: flex; justify-content: center; margin-bottom: 28px; position: relative; }
+    .pause-overlay {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      font-size: 1.1rem; font-weight: 700; color: #fff; z-index: 20;
+      pointer-events: none; text-transform: lowercase; letter-spacing: 1px;
+      opacity: 0; transition: opacity 0.3s ease;
+      text-shadow: 0 0 15px rgba(255, 102, 170, 0.6);
+      white-space: nowrap;
+    }
+    .kenken-grid.paused ~ .pause-overlay { opacity: 1; }
+    .kenken-grid {
+      display: grid; gap: 3px; padding: 3px; background: var(--osu-darker);
+      border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); transition: filter 0.3s ease;
+    }
+    .kenken-grid.paused { filter: blur(8px) grayscale(0.3); pointer-events: none; }
+    .cell {
+      aspect-ratio: 1 / 1; min-width: 65px; position: relative; display: flex;
+      align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 600;
+      color: #fff; cursor: pointer; border-radius: 8px; background: #2a2a2a;
+      user-select: none; transition: box-shadow 0.15s, filter 0.1s, transform 0.1s;
+    }
+    .cell.cage-0 { background: #1e4b3c; } .cell.cage-1 { background: #2b3b6b; }
+    .cell.cage-2 { background: #6b3a2b; } .cell.cage-3 { background: #5c2b5c; }
+    .cell.cage-4 { background: #3c5a4b; } .cell.cage-5 { background: #4a2b4a; }
+    .cell.cage-6 { background: #2b5a5a; } .cell.cage-7 { background: #5a4a2b; }
+
+    @keyframes select-pulse {
+      0% { box-shadow: 0 0 0 3px #00dfc0, 0 0 8px rgba(0, 223, 192, 0.4); transform: scale(1); }
+      50% { box-shadow: 0 0 0 5px #00dfc0, 0 0 20px rgba(0, 223, 192, 0.8); transform: scale(1); }
+      100% { box-shadow: 0 0 0 3px #00dfc0, 0 0 8px rgba(0, 223, 192, 0.4); transform: scale(1); }
+    }
+
+    .cell.selected { z-index: 10; animation: select-pulse 2s infinite ease-in-out; filter: brightness(1.2); outline: none; }
+    .cell.highlight-rowcol { filter: brightness(1.35); }
+    .cell.error { box-shadow: 0 0 0 2px #ff4757; background: #3a1515 !important; }
+
+    .cage-label { position: absolute; top: 4px; left: 6px; font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.65); pointer-events: none; z-index: 3; }
+    .cell-value { position: relative; z-index: 1; }
+
+    /* ── controls ── */
+    .controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .btn {
+      padding: 12px 16px; border: none; border-radius: 10px; font-weight: 600; font-size: 0.95rem;
+      cursor: pointer; transition: 0.2s; color: #fff; display: flex; align-items: center; justify-content: center; gap: 8px; font-family: var(--font-sf);
+    }
+    .btn svg { width: 18px; height: 18px; }
+    .btn:hover { filter: brightness(1.2); }
+    .btn-hint { background: #2f495e; } .btn-solve { background: #4f2b3d; } .btn-check { background: #1b6b5a; }
+    .hint-count { background: rgba(255,255,255,0.15); padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; }
+
+    .mt-restart-container { display: flex; justify-content: center; margin-top: 20px; }
+    .mt-restart-btn {
+      background: none; border: none; color: #555; cursor: pointer; padding: 10px;
+      display: flex; transition: all 0.2s; border-radius: 8px;
+    }
+    .mt-restart-btn svg { width: 24px; height: 24px; }
+    .mt-restart-btn:hover { color: #fff; background: rgba(255,255,255,0.05); transform: rotate(-90deg); }
+
+    /* ── modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center; z-index: 150; visibility: hidden; opacity: 0; transition: opacity 0.2s, visibility 0.2s;
+    }
+    .modal-overlay.active { visibility: visible; opacity: 1; }
+    .modal-box { background: var(--osu-dark); border-radius: 16px; padding: 28px 24px 24px; max-width: 420px; width: 90%; position: relative; border-top: 4px solid var(--osu-pink); }
+    .modal-close { position: absolute; top: 12px; left: 16px; background: none; border: none; color: #888; font-size: 1.5rem; cursor: pointer; font-weight: 700; }
+    .modal-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 16px; margin-left: 24px; color: #fff; }
+    #modalContent { color: #ccc; font-size: 0.95rem; line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+  <div class="top-nav">
+    <div class="nav-left">
+      <button class="signin-btn" onclick="alert('Sign in modal')">Sign In</button>
+      <div class="money-badge" id="moneyDisplay">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M14.5 9.5a2.5 2.5 0 0 0-5 0c0 1.38 5 1.12 5 2.5a2.5 2.5 0 0 1-5 0"/>
+        </svg>
+        200
+      </div>
+    </div>
+    <div class="nav-right">
+      <button class="nav-icon" data-tooltip="Input Puzzle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+      <button class="nav-icon" data-tooltip="Tutorial"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></button>
+      <button class="nav-icon" data-tooltip="Shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></button>
+      <button class="nav-icon" data-tooltip="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+      <button class="nav-icon" data-tooltip="Leaderboard" onclick="window.location.href='leaderboard.html'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7c0 3.31 2.69 6 6 6s6-2.69 6-6V2z"/></svg></button>
+    </div>
+  </div>
+
+  <div class="page-layout">
+    <button class="back-btn" title="Back to Menu" onclick="window.location.href='/'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+
+    <div class="main-wrapper">
+      <div class="game-container">
+        <div class="game-header">
+          <div class="header-icons">
+            <button class="icon-btn" id="pauseBtn" onclick="togglePause()" title="Pause / Resume">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path id="pauseIcon" d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg>
+            </button>
+            <button class="icon-btn" onclick="showRules()" title="How to Play">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </button>
+          </div>
+          <div class="timer-display" id="timerDisplay">00:00</div>
+          <div style="width: 108px;"></div>
+        </div>
+
+        <div class="grid-wrapper">
+          <div class="kenken-grid" id="kenkenGrid">
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #666;">Loading puzzle...</div>
+          </div>
+          <div class="pause-overlay">Game Paused</div>
+        </div>
+
+        <div class="controls">
+          <button class="btn btn-hint" onclick="useHint()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1.43.5 2.65 1.5 3.5.76.76 1.23 1.52 1.41 2.5"/></svg>
+            Hint <span class="hint-count" id="hintCount">5</span>
+          </button>
+          <button class="btn btn-solve" onclick="autoSolve()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+            Auto‑Solve
+          </button>
+          <button class="btn btn-check" onclick="checkBoard()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Check
+          </button>
+        </div>
+
+        <div class="mt-restart-container">
+          <button class="mt-restart-btn" title="Restart Board" onclick="confirmRestart()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div class="modal-title" id="modalTitle">Message</div>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+let puzzleData = null;
+  let selectedRow = 0, selectedCol = 0, seconds = 0, timerInterval = null;
+  let hintsLeft = 5, money = 200, isPaused = false, gameFinished = false;
+  let cageMap = [];
+  let cageColors = [];
+
+  // Update this to accept dynamic data
+  function assignCageColors(data) {
+    const numCages = data.cages.length;
+    const adjacent = []; 
+    for (let i = 0; i < numCages; i++) adjacent[i] = new Set();
+    
+    for (let r = 0; r < data.size; r++) {
+      for (let c = 0; c < data.size; c++) {
+        const cage1 = cageMap[r][c]; 
+        if (cage1 === -1) continue;
+        if (c < data.size - 1) { 
+            const cage2 = cageMap[r][c+1]; 
+            if (cage2 !== -1 && cage1 !== cage2) { adjacent[cage1].add(cage2); adjacent[cage2].add(cage1); } 
+        }
+        if (r < data.size - 1) { 
+            const cage2 = cageMap[r+1][c]; 
+            if (cage2 !== -1 && cage1 !== cage2) { adjacent[cage1].add(cage2); adjacent[cage2].add(cage1); } 
+        }
+      }
+    }
+    const colors = new Array(numCages).fill(-1);
+    for (let i = 0; i < numCages; i++) {
+      const used = new Set();
+      for (let adj of adjacent[i]) if (colors[adj] !== -1) used.add(colors[adj]);
+      for (let col = 0; col < 8; col++) { if (!used.has(col)) { colors[i] = col; break; } }
+      if (colors[i] === -1) colors[i] = 0;
+    }
+    return colors;
+  }
+
+  function renderGrid(data) {
+      const container = document.getElementById('kenkenGrid');
+      container.style.gridTemplateColumns = `repeat(${data.size}, 1fr)`;
+      container.style.gridTemplateRows = `repeat(${data.size}, 1fr)`;
+      container.innerHTML = '';
+      
+      for (let r = 0; r < data.size; r++) {
+        for (let c = 0; c < data.size; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell'; 
+          cell.setAttribute('data-row', r); 
+          cell.setAttribute('data-col', c);
+          
+          const cageIdx = cageMap[r][c];
+          if (cageIdx !== -1 && cageIdx < cageColors.length) {
+            cell.classList.add(`cage-${cageColors[cageIdx]}`);
+            const cage = data.cages[cageIdx];
+            
+            if (cage.cells[0][0] === r && cage.cells[0][1] === c) {
+              const label = document.createElement('span'); 
+              label.className = 'cage-label';
+              label.textContent = (cage.op === '.' || cage.op === ' ') ? String(cage.target) : cage.target + cage.op;
+              cell.appendChild(label);
+            }
+          }
+          
+          const valueSpan = document.createElement('span'); 
+          valueSpan.className = 'cell-value';
+          if (data.grid[r][c] !== 0) valueSpan.textContent = data.grid[r][c];
+          
+          cell.appendChild(valueSpan);
+          cell.addEventListener('click', () => { if (!isPaused && !gameFinished) selectCell(r, c); });
+          container.appendChild(cell);
+        }
+      }
+      updateHighlights();
+  }
+
+  function selectCell(r, c) { selectedRow = r; selectedCol = c; updateHighlights(); }
+  
+  function updateHighlights() {
+    document.querySelectorAll('.cell').forEach(cell => {
+      const r = parseInt(cell.getAttribute('data-row')), c = parseInt(cell.getAttribute('data-col'));
+      cell.classList.remove('selected', 'highlight-rowcol');
+      if (r === selectedRow && c === selectedCol) cell.classList.add('selected');
+      else if (r === selectedRow || c === selectedCol) cell.classList.add('highlight-rowcol');
+    });
+  }
+
+  async function setCellValue(r, c, val) {
+    if (gameFinished || isPaused) return;
+    
+    const response = await fetch('/api/command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ row: r, col: c, val: val })
+    });
+    
+    puzzleData = await response.json();
+    
+    if (puzzleData.solved && !gameFinished) {
+        gameFinished = true;
+        clearInterval(timerInterval);
+        updateTimer();
+        showModal('Puzzle Complete!', 'Time: ' + document.getElementById('timerDisplay').textContent);
+    }
+    
+    renderGrid(puzzleData);
+    selectCell(r, c); 
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (isPaused || gameFinished || !puzzleData) return;
+    const sz = puzzleData.size;
+    switch (e.key) {
+      case 'ArrowUp': if (selectedRow > 0) selectCell(selectedRow - 1, selectedCol); e.preventDefault(); break;
+      case 'ArrowDown': if (selectedRow < sz - 1) selectCell(selectedRow + 1, selectedCol); e.preventDefault(); break;
+      case 'ArrowLeft': if (selectedCol > 0) selectCell(selectedRow, selectedCol - 1); e.preventDefault(); break;
+      case 'ArrowRight': if (selectedCol < sz - 1) selectCell(selectedRow, selectedCol + 1); e.preventDefault(); break;
+      case 'Backspace': case 'Delete': setCellValue(selectedRow, selectedCol, 0); e.preventDefault(); break;
+      default: if (/^[1-9]$/.test(e.key)) { if (parseInt(e.key) <= sz) setCellValue(selectedRow, selectedCol, parseInt(e.key)); e.preventDefault(); }
+    }
+  });
+
+  function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    seconds = 0; updateTimer();
+    timerInterval = setInterval(() => { if (!isPaused && !gameFinished) { seconds++; updateTimer(); } }, 1000);
+  }
+  
+  function updateTimer() {
+    document.getElementById('timerDisplay').textContent = Math.floor(seconds / 60).toString().padStart(2, '0') + ':' + (seconds % 60).toString().padStart(2, '0');
+    document.getElementById('timerDisplay').classList.toggle('red', isPaused || gameFinished);
+  }
+  
+  function togglePause() {
+    if (gameFinished) return;
+    isPaused = !isPaused;
+    document.getElementById('pauseIcon').setAttribute('d', isPaused ? 'M8 5v14l11-7z' : 'M6 4h4v16H6zm8 0h4v16h-4z');
+    document.getElementById('kenkenGrid').classList.toggle('paused', isPaused);
+    updateTimer();
+  }
+
+  function showRules() {
+    showModal('KenKen Rules', `<ul style="padding-left: 20px;"><li>Fill the grid with numbers from 1 to the grid size.</li><li>Do not repeat any numbers in rows or columns.</li><li>Cages must combine to the target number using the math operation shown.</li></ul>`, true);
+  }
+
+  async function useHint() {
+      if (gameFinished) return;
+      await setCellValue(88, 88, 88); 
+
+      if (puzzleData.hint && puzzleData.hint.ready) {
+          if (puzzleData.hint.val !== -1) {
+              showModal('Hint', `Try placing a ${puzzleData.hint.val} at Row ${puzzleData.hint.row}, Col ${puzzleData.hint.col}.`);
+          } else {
+              showModal('Notice', 'No obvious hints available right now.');
+          }
+      }
+  }
+
+  function checkBoard() {
+      // Temporarily disabled until C verification endpoint is built
+      showModal('Notice', 'Check function will be online soon!');
+  }
+
+  function autoSolve() {
+      // Temporarily disabled until C auto-solve endpoint is built
+      showModal('Notice', 'Auto-solve will be online soon!');
+  }
+
+  function confirmRestart() {
+    if (gameFinished) { closeModal(); init(); return; }
+    showModal('Restart Board', `<div style="text-align:center"><p style="margin-bottom:20px">Start over?</p><div style="display:flex;gap:12px;justify-content:center"><button class="btn" style="background:var(--osu-pink);flex:1;justify-content:center" onclick="closeModal();init()">Yes</button><button class="btn" style="background:#444;flex:1;justify-content:center" onclick="closeModal()">Cancel</button></div></div>`, true);
+  }
+
+  function showModal(title, message, isHtml) {
+    document.getElementById('modalTitle').textContent = title;
+    isHtml ? document.getElementById('modalContent').innerHTML = message : document.getElementById('modalContent').textContent = message;
+    document.getElementById('modalOverlay').classList.add('active');
+  }
+  
+  function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
+
+  async function init() {
+    try {
+        // 1. Read the size from the URL (default to 3 if it's missing)
+        const urlParams = new URLSearchParams(window.location.search);
+        const gridSize = urlParams.get('size') || 3;
+
+        // 2. Send the size to Python so it knows what to generate
+        const response = await fetch('/api/start', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ size: parseInt(gridSize) })
+        });
+        
+        puzzleData = await response.json();
+        
+        cageMap = [];
+        for (let i = 0; i < puzzleData.size; i++) cageMap[i] = new Array(puzzleData.size).fill(-1);
+        
+        puzzleData.cages.forEach((cage, idx) => {
+            cage.cells.forEach(([r, c]) => {
+                if (r < puzzleData.size && c < puzzleData.size) cageMap[r][c] = idx;
+            });
+        });
+
+        gameFinished = puzzleData.solved; 
+        isPaused = false;
+        document.getElementById('pauseIcon').setAttribute('d', 'M6 4h4v16H6zm8 0h4v16h-4z');
+        document.getElementById('kenkenGrid').classList.remove('paused');
+        
+        cageColors = assignCageColors(puzzleData); 
+        renderGrid(puzzleData); 
+        startTimer(); 
+        selectCell(0, 0);
+    } catch (error) {
+        document.getElementById('kenkenGrid').innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #ff4d4d;">Failed to connect to Python backend.<br>Is the server running?</div>`;
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>
