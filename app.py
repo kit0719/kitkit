@@ -67,17 +67,14 @@ def rush_page():
 def start_game():
     global game_process
     
-    # If a game is already running, kill it so we can start fresh
     if game_process:
         game_process.terminate()
         
-    # 1. Get the requested grid size from the frontend (default to 3)
     data = request.json or {}
     size = data.get('size', 3)
-    mode = data.get('mode', 'normal')
+    mode = data.get('mode', 'normal') 
     
-    # 2. RUN THE GENERATOR FIRST!
-    # We use subprocess.run to make Python pause and wait until the C program finishes generating
+    # 1. Determine which file to load
     if mode == 'custom':
         file_path = 'test_cases/custom.txt'
         print("Loading custom board...")
@@ -85,10 +82,8 @@ def start_game():
         print(f"Generating new {size}x{size} puzzle...")
         subprocess.run(['./kenken', '--generate', str(size)])
         file_path = f'test_cases/generated_{size}x{size}.txt'
-    
-    # 3. Spawn the C game engine using the newly generated file
-    file_path = f'test_cases/generated_{size}x{size}.txt'
-    
+        
+    # 2. Boot the C Engine using the selected file
     game_process = subprocess.Popen(
         ['./kenken', file_path, '--web'],
         stdin=subprocess.PIPE,
@@ -98,7 +93,7 @@ def start_game():
         bufsize=1  
     )
     
-    # Read the initial JSON board state
+    # 3. Read the initial JSON board state
     initial_state = ""
     for line in iter(game_process.stdout.readline, ''):
         initial_state += line
