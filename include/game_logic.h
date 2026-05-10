@@ -38,16 +38,21 @@ struct Cage {
 
 // The master structure that holds the entire game state
 typedef struct {
-    int size;        // The dimension of the grid (e.g., 3 for 3x3, 5 for 5x5)
-    int num_cages;   // Total number of cages on the board
-    Cell** grid;     // A 2D array representing the board: grid[row][col]
+    int size;
+    int num_cages;
+    Cell** grid;
     Cage* cages;
+    
+    // --- NEW: Solution Cache ---
+    int** solution; 
+    int** errors;   // 1 if the cell is currently wrong, 0 if correct/empty
+
+    // Hint System Variables
     int hint_row;
     int hint_col;
     int hint_val;
-    volatile int hint_ready;
+    volatile int hint_ready; 
 } Board;
-
 
 // -----------------------------------------------------------------------------
 // Function Prototypes

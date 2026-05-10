@@ -149,6 +149,13 @@ void partition_and_save(Board* board, int size) {
         }
         fprintf(file, "\n");
     }
+    
+    for (int r = 0; r < size; r++) {
+        for (int c = 0; c < size; c++) {
+            fprintf(file, "%d ", board->grid[r][c].value);
+        }
+        fprintf(file, "\n");
+    }
 
     fclose(file);
     printf("✅ Successfully generated mathematically valid puzzle: %s\n", filename);

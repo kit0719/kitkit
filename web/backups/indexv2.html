@@ -318,15 +318,14 @@
       document.getElementById('sizeModal').classList.remove('active');
     }
 
-    function startGame() {
+    function startGame() { 
       if (selectedMode && selectedSize) {
-        // Pass both parameters to game.html
-        if (selectedMode == "normal"){
-          window.location.href = `game.html?size=${selectedSize}`;
-        } else if(selectedMode == "rush"){
-          window.location.href = `rush.html?size=${selectedSize}`;
-        } 
-      }
+        if (selectedMode === 'normal') {
+            window.location.href = `game.html?size=${selectedSize}`;
+        } else if (selectedMode === 'rush') {
+            window.location.href = `rush.html?size=${selectedSize}`;
+        }
+      } 
     }
 
     // Close modal when clicking background

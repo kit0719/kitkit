@@ -82,6 +82,17 @@ void print_board_json(Board* board) {
     }
     printf("  ],\n");
 
+    // Print the Errors Array
+    printf("  \"errors\": [\n");
+    for (int i = 0; i < board->size; i++) {
+        printf("    [");
+        for (int j = 0; j < board->size; j++) {
+            printf("%d%s", board->errors[i][j], (j < board->size - 1) ? ", " : "");
+        }
+        printf("]%s\n", (i < board->size - 1) ? "," : "");
+    }
+    printf("  ],\n");
+
     // 2. Print the Cages and Rules
     printf("  \"cages\": [\n");
     for (int i = 0; i < board->num_cages; i++) {
@@ -214,8 +225,37 @@ int main(int argc, char* argv[]) {
             continue; 
         }
 
-        // Apply move
+        // 4. Check Command (77 77 77)
+        if (r == 77 && c == 77 && v == 77) {
+            for (int i = 0; i < board->size; i++) {
+                for (int j = 0; j < board->size; j++) {
+                    // Mark cell as error IF it's filled and doesn't match the solution
+                    if (board->grid[i][j].value != 0 && board->grid[i][j].value != board->solution[i][j]) {
+                        board->errors[i][j] = 1;
+                    } else {
+                        board->errors[i][j] = 0;
+                    }
+                }
+            }
+            if (!web_mode) printf("\n[Check System] Board verified. Errors marked.\n");
+            continue;
+        }
+
+        // 5. Auto-Solve Command (66 66 66)
+        if (r == 66 && c == 66 && v == 66) {
+            for (int i = 0; i < board->size; i++) {
+                for (int j = 0; j < board->size; j++) {
+                    board->grid[i][j].value = board->solution[i][j];
+                    board->errors[i][j] = 0; // Clear any errors
+                }
+            }
+            if (!web_mode) printf("\n[Auto-Solve] Puzzle solved!\n");
+            continue;
+        }
+
+        // Standard move placement
         if (place_number(board, r, c, v)) {
+            board->errors[r][c] = 0; // Clear the red error flag when a valid move is made
             if (!web_mode) printf("\nMove accepted!\n");
         }
     }

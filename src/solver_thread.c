@@ -6,28 +6,24 @@
 void* calculate_hint(void* arg) {
     Board* board = (Board*)arg;
 
-    // Find the first empty cell
+    // Scan the board for an empty cell OR a wrong cell
     for (int r = 0; r < board->size; r++) {
         for (int c = 0; c < board->size; c++) {
-            if (board->grid[r][c].value == 0) {
+            // If it's empty, or if it's filled with the wrong number
+            if (board->grid[r][c].value == 0 || board->grid[r][c].value != board->solution[r][c]) {
                 
-                // Try to find a valid number
-                for (int v = 1; v <= board->size; v++) {
-                    if (is_move_valid_basic(board, r, c, v)) {
-                        // Save the answer to the board struct instead of printing
-                        board->hint_row = r;
-                        board->hint_col = c;
-                        board->hint_val = v;
-                        board->hint_ready = 1; // Flag that a hint is ready
-                        
-                        pthread_exit(NULL);
-                    }
-                }
+                // Grab the guaranteed correct answer from the Solution Cache
+                board->hint_row = r;
+                board->hint_col = c;
+                board->hint_val = board->solution[r][c];
+                board->hint_ready = 1; 
+                
+                pthread_exit(NULL);
             }
         }
     }
     
-    // If no hint is found, we use -1 to signal failure
+    // If the board is full and completely correct, no hints needed
     board->hint_val = -1;
     board->hint_ready = 1; 
     pthread_exit(NULL);

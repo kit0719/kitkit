@@ -16,6 +16,10 @@ def index():
 def game_page():
     return render_template('game.html')
 
+@app.route('/rush.html')
+def rush_page():
+    return render_template('rush.html')
+
 @app.route('/api/start', methods=['POST'])
 def start_game():
     global game_process
@@ -91,6 +95,5 @@ def send_command():
     )
 
 if __name__ == '__main__':
-    # Run the server on port 5000
-    print("🚀 KenKen Web Server starting on http://127.0.0.1:5000")
-    app.run(debug=True, port=5000)
+    print("🚀 KenKen Web Server starting on http://127.0.0.1:8888")
+    app.run(debug=True, port=8888)

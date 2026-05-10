@@ -41,6 +41,7 @@
     .money-badge svg { width: 18px; height: 18px; }
 
     .nav-right { display: flex; gap: 12px; }
+    .nav-logo {height: 50px; padding-right:10px}
     .nav-icon {
       position: relative; background: transparent; border: 1px solid #444;
       color: #ddd; width: 44px; height: 44px; border-radius: 12px;
@@ -77,6 +78,24 @@
     }
 
     .main-wrapper { flex: 1; max-width: 700px; display: flex; flex-direction: column; gap: 24px; }
+
+    .header-section {
+      height: 56px;
+      display: flex;
+      align-items: center;
+      font-size: 40px;
+      font-weight: 500;
+      margin-bottom: 20px;
+      letter-spacing: -0.5px;
+    }
+
+    .title-size { color: #fff; }
+    .title-separator { margin: 0 12px; color: #555; }
+    .title-mode { 
+      font-weight: 700;
+      color: var(--osu-pink); 
+      text-transform: capitalize; 
+    }
 
     .game-container {
       background: var(--osu-dark); border-radius: 16px; padding: 28px 24px 24px;
@@ -172,8 +191,8 @@
     }
     .modal-overlay.active { visibility: visible; opacity: 1; }
     .modal-box { background: var(--osu-dark); border-radius: 16px; padding: 28px 24px 24px; max-width: 420px; width: 90%; position: relative; border-top: 4px solid var(--osu-pink); }
-    .modal-close { position: absolute; top: 12px; left: 16px; background: none; border: none; color: #888; font-size: 1.5rem; cursor: pointer; font-weight: 700; }
-    .modal-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 16px; margin-left: 24px; color: #fff; }
+    .modal-close { position: absolute; top: 12px; right: 16px;background: none; border: none; color: #888; font-size: 1.5rem; cursor: pointer; font-weight: 700; }
+    .modal-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 16px; margin-left: 0px;color: #fff; }
     #modalContent { color: #ccc; font-size: 0.95rem; line-height: 1.5; }
   </style>
 </head>
@@ -181,6 +200,14 @@
 
   <div class="top-nav">
     <div class="nav-left">
+      <img class="nav-logo" src="img/kitkit.png" style="cursor: pointer;" onclick="confirmLeave()">
+      <button class="nav-icon" data-tooltip="Input Puzzle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+      <button class="nav-icon" data-tooltip="Tutorial"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></button>
+      <button class="nav-icon" data-tooltip="Shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></button>
+      <button class="nav-icon" data-tooltip="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+      <button class="nav-icon" data-tooltip="Leaderboard" onclick="window.location.href='leaderboard.html'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7c0 3.31 2.69 6 6 6s6-2.69 6-6V2z"/></svg></button>
+    </div>
+    <div class="nav-right">
       <button class="signin-btn" onclick="alert('Sign in modal')">Sign In</button>
       <div class="money-badge" id="moneyDisplay">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -189,21 +216,19 @@
         200
       </div>
     </div>
-    <div class="nav-right">
-      <button class="nav-icon" data-tooltip="Input Puzzle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
-      <button class="nav-icon" data-tooltip="Tutorial"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></button>
-      <button class="nav-icon" data-tooltip="Shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></button>
-      <button class="nav-icon" data-tooltip="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
-      <button class="nav-icon" data-tooltip="Leaderboard" onclick="window.location.href='leaderboard.html'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7c0 3.31 2.69 6 6 6s6-2.69 6-6V2z"/></svg></button>
-    </div>
   </div>
 
   <div class="page-layout">
-    <button class="back-btn" title="Back to Menu" onclick="window.location.href='/'">
+    <button class="back-btn" title="Back to Menu" onclick="confirmLeave()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
     </button>
 
     <div class="main-wrapper">
+      <div class="header-section">
+        <span class="title-size" id="displaySize">--x--</span>
+        <span class="title-separator">·</span>
+        <span class="title-mode" id="displayMode">-- Mode</span>
+      </div>
       <div class="game-container">
         <div class="game-header">
           <div class="header-icons">
@@ -230,13 +255,15 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1.43.5 2.65 1.5 3.5.76.76 1.23 1.52 1.41 2.5"/></svg>
             Hint <span class="hint-count" id="hintCount">5</span>
           </button>
+          
           <button class="btn btn-solve" onclick="autoSolve()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
             Auto‑Solve
           </button>
+          
           <button class="btn btn-check" onclick="checkBoard()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-            Check
+            Check <span class="hint-count" id="checkCount">3</span>
           </button>
         </div>
 
@@ -260,7 +287,7 @@
 <script>
 let puzzleData = null;
   let selectedRow = 0, selectedCol = 0, seconds = 0, timerInterval = null;
-  let hintsLeft = 5, money = 200, isPaused = false, gameFinished = false;
+  let hintsLeft = 5, checkLeft = 3, money = 200, isPaused = false, gameFinished = false;
   let cageMap = [];
   let cageColors = [];
 
@@ -324,6 +351,9 @@ let puzzleData = null;
           valueSpan.className = 'cell-value';
           if (data.grid[r][c] !== 0) valueSpan.textContent = data.grid[r][c];
           
+          if (data.errors && data.errors[r][c] === 1) {
+              cell.classList.add('error');
+          }
           cell.appendChild(valueSpan);
           cell.addEventListener('click', () => { if (!isPaused && !gameFinished) selectCell(r, c); });
           container.appendChild(cell);
@@ -358,11 +388,23 @@ let puzzleData = null;
         gameFinished = true;
         clearInterval(timerInterval);
         updateTimer();
-        showModal('Puzzle Complete!', 'Time: ' + document.getElementById('timerDisplay').textContent);
+        
+        // --- NEW: Differentiate the win message ---
+        if (r === 66 && c === 66 && val === 66) {
+            // It was solved by the Auto-Solve command
+            showModal('System Override', 'The puzzle was auto-completed by the system engine. Better luck next time!');
+        } else {
+            // It was solved naturally by the player
+            showModal('Puzzle Complete!', 'Time: ' + document.getElementById('timerDisplay').textContent);
+            // We will add the money payout here in the next phase!
+        }
     }
     
     renderGrid(puzzleData);
-    selectCell(r, c); 
+    
+    if (r < puzzleData.size && c < puzzleData.size) {
+        selectCell(r, c); 
+    }
   }
 
   document.addEventListener('keydown', (e) => {
@@ -402,31 +444,73 @@ let puzzleData = null;
   }
 
   async function useHint() {
-      if (gameFinished) return;
-      await setCellValue(88, 88, 88); 
+      if (gameFinished || hintsLeft <= 0) return;
+      
+      // Trigger the background C thread
+      const response = await fetch('/api/command', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ row: 88, col: 88, val: 88 })
+      });
+      puzzleData = await response.json();
 
-      if (puzzleData.hint && puzzleData.hint.ready) {
-          if (puzzleData.hint.val !== -1) {
-              showModal('Hint', `Try placing a ${puzzleData.hint.val} at Row ${puzzleData.hint.row}, Col ${puzzleData.hint.col}.`);
-          } else {
-              showModal('Notice', 'No obvious hints available right now.');
-          }
+      if (puzzleData.hint && puzzleData.hint.ready && puzzleData.hint.val !== -1) {
+          hintsLeft--;
+          document.getElementById('hintCount').textContent = hintsLeft;
+          
+          // Visually move the glowing cursor to the hint cell!
+          selectCell(puzzleData.hint.row, puzzleData.hint.col);
+          
+          // Actually place the number on the board
+          await setCellValue(puzzleData.hint.row, puzzleData.hint.col, puzzleData.hint.val);
+      } else {
+          showModal('Notice', 'No obvious hints available right now.');
       }
   }
 
-  function checkBoard() {
-      // Temporarily disabled until C verification endpoint is built
-      showModal('Notice', 'Check function will be online soon!');
-  }
+  async function checkBoard() {
+      // Prevent fetching if game is over or out of checks
+      if (gameFinished) return;
+      if (checksLeft <= 0) {
+          showModal('Notice', 'No checks left! You are on your own.');
+          return;
+      }
 
-  function autoSolve() {
-      // Temporarily disabled until C auto-solve endpoint is built
-      showModal('Notice', 'Auto-solve will be online soon!');
+      // Send the Check Command (77) to the C engine
+      await setCellValue(77, 77, 77);
+      
+      // Decrement the counter and update the UI
+      checksLeft--;
+      document.getElementById('checkCount').textContent = checksLeft;
+  }
+  async function autoSolve() {
+      if (gameFinished) return;
+      // Send the Auto-Solve Command (66)
+      await setCellValue(66, 66, 66);
   }
 
   function confirmRestart() {
     if (gameFinished) { closeModal(); init(); return; }
     showModal('Restart Board', `<div style="text-align:center"><p style="margin-bottom:20px">Start over?</p><div style="display:flex;gap:12px;justify-content:center"><button class="btn" style="background:var(--osu-pink);flex:1;justify-content:center" onclick="closeModal();init()">Yes</button><button class="btn" style="background:#444;flex:1;justify-content:center" onclick="closeModal()">Cancel</button></div></div>`, true);
+  }
+
+  function confirmLeave() {
+    // If the game is already over or hasn't started, just leave
+    if (gameFinished || !puzzleData) {
+      window.location.href = 'index.html';
+      return;
+    }
+
+    // Otherwise, show the confirmation modal
+    showModal('Leave Game?', `
+      <div style="text-align:left">
+        <p style="margin-bottom:20px">Your progress will be lost. Are you sure you want to return to the main menu?</p>
+        <div style="display:flex;gap:12px;justify-content:center">
+          <button class="btn" style="background:var(--osu-pink);flex:1;justify-content:center" onclick="window.location.href='index.html'">Leave</button>
+          <button class="btn" style="background:#444;flex:1;justify-content:center" onclick="closeModal()">Stay</button>
+        </div>
+      </div>
+    `, true);
   }
 
   function showModal(title, message, isHtml) {
@@ -442,8 +526,13 @@ let puzzleData = null;
         // 1. Read the size from the URL (default to 3 if it's missing)
         const urlParams = new URLSearchParams(window.location.search);
         const gridSize = urlParams.get('size') || 3;
+        const rawMode = urlParams.get('mode') || 'normal';
 
-        // 2. Send the size to Python so it knows what to generate
+        // 2. Update the UI Text
+        document.getElementById('displaySize').textContent = `${gridSize}x${gridSize}`;
+        document.getElementById('displayMode').textContent = `${rawMode} Mode`;
+
+        // 3. Send the size to Python so it knows what to generate
         const response = await fetch('/api/start', { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -452,6 +541,12 @@ let puzzleData = null;
         
         puzzleData = await response.json();
         
+                hintsLeft = puzzleData.size;
+        document.getElementById('hintCount').textContent = hintsLeft;
+
+        checksLeft = puzzleData.size;
+        document.getElementById('checkCount').textContent = checksLeft;
+
         cageMap = [];
         for (let i = 0; i < puzzleData.size; i++) cageMap[i] = new Array(puzzleData.size).fill(-1);
         

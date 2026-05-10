@@ -25,6 +25,13 @@ Board* create_board(int size, int num_cages) {
             board->grid[i][j].cage = NULL;
         }
     }
+    // Allocate the solution and error matrices
+    board->solution = (int**)malloc(size * sizeof(int*));
+    board->errors = (int**)malloc(size * sizeof(int*));
+    for (int i = 0; i < size; i++) {
+        board->solution[i] = (int*)calloc(size, sizeof(int));
+        board->errors[i] = (int*)calloc(size, sizeof(int));
+    }
 
     // Allocate array for the cages
     board->cages = (Cage*)malloc(num_cages * sizeof(Cage));
@@ -44,6 +51,12 @@ void free_board(Board* board) {
     for (int i = 0; i < board->size; i++) {
         free(board->grid[i]);
     }
+    for (int i = 0; i < board->size; i++) {
+        free(board->solution[i]);
+        free(board->errors[i]);
+    }
+    free(board->solution);
+    free(board->errors);
     free(board->grid);
     free(board->cages);
     free(board);
@@ -93,6 +106,16 @@ Board* load_puzzle(const char* filename) {
             // Link the cage to the cell, and the cell back to the cage
             board->cages[i].cells[j] = &(board->grid[r][c]);
             board->grid[r][c].cage = &(board->cages[i]);
+        }
+    }
+
+    // --- NEW: Read the hidden solution cache (if it exists) ---
+    for (int r = 0; r < size; r++) {
+        for (int c = 0; c < size; c++) {
+            // If fscanf fails, it just leaves the cell as 0 (safe fallback)
+            if (fscanf(file, "%d", &board->solution[r][c]) != 1) {
+                board->solution[r][c] = 0; 
+            }
         }
     }
 
