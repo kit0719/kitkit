@@ -224,6 +224,29 @@
     .modal-close { position: absolute; top: 12px; right: 16px;background: none; border: none; color: #888; font-size: 1.5rem; cursor: pointer; font-weight: 700; }
     .modal-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 16px; margin-left: 0px;color: #fff; }
     #modalContent { color: #ccc; font-size: 0.95rem; line-height: 1.5; }
+    /* ── Profile Dropdown & Auth ── */
+    .user-profile-btn {
+      background: rgba(255,102,170,0.1); border: 1px solid var(--osu-pink);
+      color: var(--osu-pink); padding: 8px 18px; border-radius: 8px;
+      font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; gap: 8px; align-items: center;
+    }
+    .profile-wrapper { position: relative; display: inline-block; }
+    .profile-dropdown {
+        position: absolute; top: 110%; right: 0; background: var(--osu-dark);
+        border: 1px solid #333; border-radius: 12px; padding: 8px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5); opacity: 0; visibility: hidden;
+        transform: translateY(-10px); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); min-width: 160px; z-index: 100;
+    }
+    .profile-wrapper:hover .profile-dropdown, .profile-wrapper:focus-within .profile-dropdown {
+        opacity: 1; visibility: visible; transform: translateY(0);
+    }
+    .dropdown-item {
+        width: 100%; text-align: left; background: transparent; border: none;
+        color: #ddd; padding: 10px 16px; border-radius: 8px; cursor: pointer;
+        font-size: 0.95rem; font-weight: 600; font-family: var(--font-sf); transition: 0.2s;
+        display: flex; gap: 10px; align-items: center;
+    }
+    .dropdown-item:hover { background: rgba(255,102,170,0.1); color: var(--osu-pink); }
   </style>
 </head>
 <body>
@@ -325,7 +348,57 @@
 <script>
   let puzzleData = null;
   let selectedRow = 0, selectedCol = 0;
+  let currentUser = null;
+
+  async function checkAuth() {
+      const res = await fetch('/api/me');
+      const data = await res.json();
+      if (data.logged_in) {
+          updateAuthUI(data.username, data.money);
+      } else {
+          // If they are a guest, make sure the "Sign In" button sends them back to the main menu
+          const signinBtn = document.querySelector('.signin-btn');
+          if (signinBtn) signinBtn.onclick = () => window.location.href = '/';
+      }
+  }
+
+  function updateAuthUI(username, money) {
+      currentUser = username;
+      
+      // Swap the Sign In button for the Profile Dropdown
+      const signinBtn = document.querySelector('.signin-btn');
+      if (signinBtn) {
+          signinBtn.outerHTML = `
+          <div class="profile-wrapper">
+            <button class="user-profile-btn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              ${username}
+            </button>
+            <div class="profile-dropdown">
+              <button class="dropdown-item" onclick="logout()">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Sign Out
+              </button>
+            </div>
+          </div>`;
+      }
+      
+      // Update the money badge
+      const moneyDisplay = document.getElementById('moneyDisplay');
+      if (moneyDisplay) {
+          moneyDisplay.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M14.5 9.5a2.5 2.5 0 0 0-5 0c0 1.38 5 1.12 5 2.5a2.5 2.5 0 0 1-5 0"/></svg> ${money}`;
+      }
+  }
+
+  async function logout() {
+      await fetch('/api/logout', { method: 'POST' });
+      window.location.reload(); 
+  }
+
+  // Ping the server to check login status as soon as the page loads
+  checkAuth();
   
+  // ---------------------------
   // RUSH MODE VARIABLES
   let timeRemaining = 0; 
   let timerInterval = null;

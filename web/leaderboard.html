@@ -141,6 +141,55 @@
     .rank-item.empty .rank-name { color: #555; font-style: italic; font-weight: 400; }
     .rank-item.empty .rank-score { background: transparent; color: #555; }
 
+    /* ── Profile Dropdown & Auth Modal ── */
+    .user-profile-btn {
+      background: rgba(255,102,170,0.1); border: 1px solid var(--osu-pink);
+      color: var(--osu-pink); padding: 8px 18px; border-radius: 8px;
+      font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; gap: 8px; align-items: center;
+    }
+    .profile-wrapper { position: relative; display: inline-block; }
+    .profile-dropdown {
+        position: absolute; top: 110%; right: 0; background: var(--osu-dark);
+        border: 1px solid #333; border-radius: 12px; padding: 8px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5); opacity: 0; visibility: hidden;
+        transform: translateY(-10px); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); min-width: 160px; z-index: 100;
+    }
+    .profile-wrapper:hover .profile-dropdown, .profile-wrapper:focus-within .profile-dropdown {
+        opacity: 1; visibility: visible; transform: translateY(0);
+    }
+    .dropdown-item {
+        width: 100%; text-align: left; background: transparent; border: none;
+        color: #ddd; padding: 10px 16px; border-radius: 8px; cursor: pointer;
+        font-size: 0.95rem; font-weight: 600; font-family: var(--font-sf); transition: 0.2s;
+        display: flex; gap: 10px; align-items: center;
+    }
+    .dropdown-item:hover { background: rgba(255,102,170,0.1); color: var(--osu-pink); }
+    
+    .auth-box {
+      background: var(--osu-dark); border-radius: 20px; padding: 32px;
+      max-width: 400px; width: 90%; position: relative; border-top: 4px solid var(--osu-pink);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+    }
+    .auth-tabs { display: flex; gap: 12px; margin-bottom: 24px; }
+    .auth-tab {
+      flex: 1; background: transparent; border: none; color: #888; font-size: 1.1rem;
+      font-weight: 700; padding-bottom: 12px; cursor: pointer; border-bottom: 2px solid #333; transition: 0.2s;
+    }
+    .auth-tab.active { color: var(--osu-pink); border-bottom-color: var(--osu-pink); }
+    .auth-input {
+      width: 100%; background: #111; border: 2px solid #333; color: #fff;
+      padding: 14px 16px; border-radius: 12px; font-size: 1rem; margin-bottom: 16px;
+      outline: none; transition: 0.2s; font-family: var(--font-sf);
+    }
+    .auth-input:focus { border-color: var(--osu-pink); }
+    .auth-submit {
+      width: 100%; background: var(--osu-pink); color: #fff; border: none;
+      padding: 14px; border-radius: 12px; font-size: 1.1rem; font-weight: 700;
+      cursor: pointer; transition: 0.2s; margin-top: 8px; font-family: var(--font-sf);
+    }
+    .auth-submit:hover { filter: brightness(1.1); transform: translateY(-2px); }
+    .auth-error { color: #ff4d4d; font-size: 0.9rem; margin-bottom: 12px; text-align: center; min-height: 20px;}
+
   </style>
 </head>
 <body>
@@ -206,51 +255,174 @@
     </div>
   </div>
 
-<script>
-  let currentMode = 'normal';
+  <div class="modal-overlay" id="authModal" onclick="closeAuthModal()">
+    <div class="auth-box" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="closeAuthModal()">×</button>
+      
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Sign In</button>
+        <button class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">Register</button>
+      </div>
+      
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <input type="text" id="loginUsername" class="auth-input" placeholder="Username" required>
+        <input type="password" id="loginPassword" class="auth-input" placeholder="Password" required>
+        <div id="loginError" class="auth-error"></div>
+        <button type="submit" class="auth-submit">Sign In</button>
+      </form>
 
-  const dummyData = {
-    normal: [
-      { name: 'Faker', score: '00:45' }, { name: 'osu_master99', score: '01:02' },
-      { name: 'SystemHacker', score: '01:14' }, { name: 'KenKenGod', score: '01:30' },
-      { name: 'Player_Five', score: '02:05' }
-    ],
-    rush: [
-      { name: 'SpeedDemon', score: '42 Solved' }, { name: 'Faker', score: '38 Solved' },
-      { name: 'SystemHacker', score: '29 Solved' }
-    ]
-  };
+      <form id="registerForm" onsubmit="handleRegister(event)" style="display: none;">
+        <input type="text" id="regUsername" class="auth-input" placeholder="Choose Username" required>
+        <input type="password" id="regPassword" class="auth-input" placeholder="Choose Password" required>
+        <div id="regError" class="auth-error"></div>
+        <button type="submit" class="auth-submit">Create Account</button>
+      </form>
+    </div>
+  </div>
+
+<script>
+  // --- AUTHENTICATION LOGIC ---
+  let currentUser = null;
+
+  async function checkAuth() {
+      const res = await fetch('/api/me');
+      const data = await res.json();
+      if (data.logged_in) {
+          updateAuthUI(data.username, data.money);
+      } else {
+          // If guest, wire the top button to open the local modal
+          const signinBtn = document.querySelector('.signin-btn');
+          if (signinBtn) signinBtn.onclick = openAuthModal;
+      }
+  }
+
+  function updateAuthUI(username, money) {
+      currentUser = username;
+      const signinBtn = document.querySelector('.signin-btn');
+      if (signinBtn) {
+          signinBtn.outerHTML = `
+          <div class="profile-wrapper">
+            <button class="user-profile-btn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              ${username}
+            </button>
+            <div class="profile-dropdown">
+              <button class="dropdown-item" onclick="logout()">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Sign Out
+              </button>
+            </div>
+          </div>`;
+      }
+      
+      const moneyDisplay = document.getElementById('moneyDisplay');
+      if (moneyDisplay) {
+          moneyDisplay.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M14.5 9.5a2.5 2.5 0 0 0-5 0c0 1.38 5 1.12 5 2.5a2.5 2.5 0 0 1-5 0"/></svg> ${money}`;
+      }
+      closeAuthModal();
+  }
+
+  // Modal Controls
+  function openAuthModal() { document.getElementById('authModal').classList.add('active'); }
+  function closeAuthModal() { document.getElementById('authModal').classList.remove('active'); }
+  function switchAuthTab(tab) {
+      document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+      document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+      document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+      document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+      document.getElementById('loginError').textContent = '';
+      document.getElementById('regError').textContent = '';
+  }
+
+  // API Calls
+  async function handleLogin(e) {
+      e.preventDefault();
+      const res = await fetch('/api/login', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: loginUsername.value, password: loginPassword.value })
+      });
+      const data = await res.json();
+      if (data.success) updateAuthUI(data.username, data.money);
+      else document.getElementById('loginError').textContent = data.error;
+  }
+
+  async function handleRegister(e) {
+      e.preventDefault();
+      const res = await fetch('/api/register', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: regUsername.value, password: regPassword.value })
+      });
+      const data = await res.json();
+      if (data.success) updateAuthUI(data.username, data.money);
+      else document.getElementById('regError').textContent = data.error;
+  }
+
+  async function logout() {
+      await fetch('/api/logout', { method: 'POST' });
+      window.location.reload(); 
+  }
+
+  checkAuth();
+  // --- LEADERBOARD LOGIC ---
+  let currentMode = 'normal';
+  let currentSize = 4; // Default size on your UI
 
   function setMode(mode) {
     currentMode = mode;
     document.getElementById('btnNormal').classList.toggle('active', mode === 'normal');
     document.getElementById('btnRush').classList.toggle('active', mode === 'rush');
-    renderLeaderboard();
+    fetchLeaderboard();
   }
 
   function setSize(element, size) {
+    currentSize = size;
     document.querySelectorAll('.filter-options .chip').forEach(el => {
       if (el.textContent.includes('x')) el.classList.remove('active');
     });
     element.classList.add('active');
-    renderLeaderboard();
+    fetchLeaderboard();
   }
 
-  function renderLeaderboard() {
-    const list = document.getElementById('leaderboardList');
-    list.innerHTML = '';
-    const data = dummyData[currentMode] || [];
-    
-    for (let i = 0; i < 10; i++) {
-      if (i < data.length) {
-        list.innerHTML += `<div class="rank-item filled"><div class="rank-pos">#${i + 1}</div><div class="rank-name">${data[i].name}</div><div class="rank-score">${data[i].score}</div></div>`;
+  // Format the raw database score into something readable
+  function formatScore(score, mode) {
+      if (mode === 'normal') {
+          const m = Math.floor(score / 60).toString().padStart(2, '0');
+          const s = (score % 60).toString().padStart(2, '0');
+          return `${m}:${s}`;
       } else {
-        list.innerHTML += `<div class="rank-item empty"><div class="rank-pos">#${i + 1}</div><div class="rank-name">---</div><div class="rank-score">---</div></div>`;
+          return `${score} Solved`;
       }
+  }
+
+  async function fetchLeaderboard() {
+    const list = document.getElementById('leaderboardList');
+    list.innerHTML = `<div style="text-align:center; padding:20px; color:#666;">Loading global rankings...</div>`;
+    
+    // Fetch live data from Python API
+    const response = await fetch(`/api/leaderboard?mode=${currentMode}&size=${currentSize}`);
+    const data = await response.json();
+    
+    if (data.success) {
+        list.innerHTML = '';
+        const leaders = data.leaderboard;
+        
+        // Loop through 1 to 10 to ensure the podium is always 10 slots long
+        for (let i = 0; i < 10; i++) {
+          if (i < leaders.length) {
+            const formatted = formatScore(leaders[i].score, currentMode);
+            list.innerHTML += `<div class="rank-item filled"><div class="rank-pos">#${i + 1}</div><div class="rank-name">${leaders[i].name}</div><div class="rank-score">${formatted}</div></div>`;
+          } else {
+            // Fill empty slots with dashes
+            list.innerHTML += `<div class="rank-item empty"><div class="rank-pos">#${i + 1}</div><div class="rank-name">---</div><div class="rank-score">---</div></div>`;
+          }
+        }
+    } else {
+        list.innerHTML = `<div style="text-align:center; padding:20px; color:#ff4d4d;">Failed to load leaderboard.</div>`;
     }
   }
 
-  renderLeaderboard();
+  // Load the initial data when the page boots
+  fetchLeaderboard();
 </script>
 </body>
 </html>

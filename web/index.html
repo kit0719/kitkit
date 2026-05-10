@@ -219,6 +219,54 @@
     }
     .btn-start:disabled { opacity: 0.3; cursor: not-allowed; }
     .btn-start:not(:disabled):hover { transform: scale(1.02); filter: brightness(1.1); }
+    .auth-box {
+      background: var(--osu-dark); border-radius: 20px; padding: 32px;
+      max-width: 400px; width: 90%; position: relative; border-top: 4px solid var(--osu-pink);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+    }
+    .auth-tabs { display: flex; gap: 12px; margin-bottom: 24px; }
+    .auth-tab {
+      flex: 1; background: transparent; border: none; color: #888; font-size: 1.1rem;
+      font-weight: 700; padding-bottom: 12px; cursor: pointer; border-bottom: 2px solid #333;
+      transition: 0.2s;
+    }
+    .auth-tab.active { color: var(--osu-pink); border-bottom-color: var(--osu-pink); }
+    .auth-input {
+      width: 100%; background: #111; border: 2px solid #333; color: #fff;
+      padding: 14px 16px; border-radius: 12px; font-size: 1rem; margin-bottom: 16px;
+      outline: none; transition: 0.2s; font-family: var(--font-sf);
+    }
+    .auth-input:focus { border-color: var(--osu-pink); }
+    .auth-submit {
+      width: 100%; background: var(--osu-pink); color: #fff; border: none;
+      padding: 14px; border-radius: 12px; font-size: 1.1rem; font-weight: 700;
+      cursor: pointer; transition: 0.2s; margin-top: 8px; font-family: var(--font-sf);
+    }
+    .auth-submit:hover { filter: brightness(1.1); transform: translateY(-2px); }
+    .auth-error { color: #ff4d4d; font-size: 0.9rem; margin-bottom: 12px; text-align: center; min-height: 20px;}
+    .user-profile-btn {
+      background: rgba(255,102,170,0.1); border: 1px solid var(--osu-pink);
+      color: var(--osu-pink); padding: 8px 18px; border-radius: 8px;
+      font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; gap: 8px; align-items: center;
+    }
+    /* ── Profile Dropdown ── */
+    .profile-wrapper { position: relative; display: inline-block; }
+    .profile-dropdown {
+        position: absolute; top: 110%; right: 0; background: var(--osu-dark);
+        border: 1px solid #333; border-radius: 12px; padding: 8px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5); opacity: 0; visibility: hidden;
+        transform: translateY(-10px); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); min-width: 160px; z-index: 100;
+    }
+    .profile-wrapper:hover .profile-dropdown, .profile-wrapper:focus-within .profile-dropdown {
+        opacity: 1; visibility: visible; transform: translateY(0);
+    }
+    .dropdown-item {
+        width: 100%; text-align: left; background: transparent; border: none;
+        color: #ddd; padding: 10px 16px; border-radius: 8px; cursor: pointer;
+        font-size: 0.95rem; font-weight: 600; font-family: var(--font-sf); transition: 0.2s;
+        display: flex; gap: 10px; align-items: center;
+    }
+    .dropdown-item:hover { background: rgba(255,102,170,0.1); color: var(--osu-pink); }
   </style>
 </head>
 <body>
@@ -281,9 +329,118 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="authModal" onclick="closeAuthModal()">
+    <div class="auth-box" onclick="event.stopPropagation()">
+      
+      
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Sign In</button>
+        <button class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">Register</button>
+      </div>
+      
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <input type="text" id="loginUsername" class="auth-input" placeholder="Username" required>
+        <input type="password" id="loginPassword" class="auth-input" placeholder="Password" required>
+        <div id="loginError" class="auth-error"></div>
+        <button type="submit" class="auth-submit">Sign In</button>
+      </form>
+
+      <form id="registerForm" onsubmit="handleRegister(event)" style="display: none;">
+        <input type="text" id="regUsername" class="auth-input" placeholder="Choose Username" required>
+        <input type="password" id="regPassword" class="auth-input" placeholder="Choose Password" required>
+        <div id="regError" class="auth-error"></div>
+        <button type="submit" class="auth-submit">Create Account</button>
+      </form>
+    </div>
+  </div>
+
   <script>
     let selectedMode = null;
     let selectedSize = null;
+    let currentUser = null;
+
+    // 1. Check if the user is already logged in when the page loads
+    async function checkAuth() {
+        const res = await fetch('/api/me');
+        const data = await res.json();
+        if (data.logged_in) {
+            updateAuthUI(data.username, data.money);
+        }
+    }
+
+    // 2. Update the Top Nav Bar
+    function updateAuthUI(username, money) {
+        currentUser = username;
+        
+        // Inject the Dropdown Architecture
+        const signinBtn = document.querySelector('.signin-btn');
+        if (signinBtn) {
+            signinBtn.outerHTML = `
+            <div class="profile-wrapper">
+              <button class="user-profile-btn">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                ${username}
+              </button>
+              <div class="profile-dropdown">
+                <button class="dropdown-item" onclick="logout()">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  Sign Out
+                </button>
+              </div>
+            </div>`;
+        }
+        
+        // Update the money badge
+        document.getElementById('moneyDisplay').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M14.5 9.5a2.5 2.5 0 0 0-5 0c0 1.38 5 1.12 5 2.5a2.5 2.5 0 0 1-5 0"/></svg> ${money}`;
+        
+        closeAuthModal();
+    }
+
+    // 3. Modal Controls
+    function openAuthModal() { document.getElementById('authModal').classList.add('active'); }
+    function closeAuthModal() { document.getElementById('authModal').classList.remove('active'); }
+    function switchAuthTab(tab) {
+        document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+        document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+        document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+        document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+        document.getElementById('loginError').textContent = '';
+        document.getElementById('regError').textContent = '';
+    }
+
+    // Replace your old "alert('Sign in modal')" on the top button with the real function:
+    document.querySelector('.signin-btn').onclick = openAuthModal;
+
+    // 4. API Calls
+    async function handleLogin(e) {
+        e.preventDefault();
+        const res = await fetch('/api/login', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: loginUsername.value, password: loginPassword.value })
+        });
+        const data = await res.json();
+        if (data.success) updateAuthUI(data.username, data.money);
+        else document.getElementById('loginError').textContent = data.error;
+    }
+
+    async function handleRegister(e) {
+        e.preventDefault();
+        const res = await fetch('/api/register', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: regUsername.value, password: regPassword.value })
+        });
+        const data = await res.json();
+        if (data.success) updateAuthUI(data.username, data.money);
+        else document.getElementById('regError').textContent = data.error;
+    }
+
+    async function logout() {
+        await fetch('/api/logout', { method: 'POST' });
+        window.location.reload(); // Quickest way to reset the UI to guest mode
+    }
+
+    // Run this the moment the page loads!
+    checkAuth();
 
     function openSizeModal(mode) {
       selectedMode = mode;
