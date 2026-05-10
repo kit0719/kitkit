@@ -317,7 +317,6 @@
 
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
   <div class="modal-box" onclick="event.stopPropagation()">
-    <button class="modal-close" onclick="closeModal()">×</button>
     <div class="modal-title" id="modalTitle">Message</div>
     <div id="modalContent"></div>
   </div>
@@ -631,7 +630,7 @@
 
   function confirmRestart() {
     if (gameFinished) { closeModal(); init(); return; }
-    showModal('Restart Run', `<div style="text-align:center"><p style="margin-bottom:20px">End current run and start over?</p><div style="display:flex;gap:12px;justify-content:center"><button class="btn" style="background:var(--osu-pink);flex:1;justify-content:center" onclick="closeModal();init()">Yes</button><button class="btn" style="background:#444;flex:1;justify-content:center" onclick="closeModal()">Cancel</button></div></div>`, true);
+    showModal('Restart Game', `<div style="text-align:left"><p style="margin-bottom:20px">End current game and start over?</p><div style="display:flex;gap:12px;justify-content:center"><button class="btn" style="background:var(--osu-pink);flex:1;justify-content:center" onclick="closeModal();init()">Yes</button><button class="btn" style="background:#444;flex:1;justify-content:center" onclick="closeModal()">Cancel</button></div></div>`, true);
   }
 
   function confirmLeave() {
