@@ -23,7 +23,6 @@
       font-family: var(--font-sf); -webkit-font-smoothing: antialiased;
     }
 
-    /* ── top navigation bar ── */
     .top-nav {
       width: 100%; max-width: 900px; display: flex; justify-content: space-between;
       align-items: center; padding: 20px 30px; gap: 16px; margin-bottom: 20px;
@@ -60,7 +59,6 @@
     }
     .nav-icon:hover::after { opacity: 1; }
 
-    /* ── Layout (Back btn + Content) ── */
     .page-layout {
       display: flex; gap: 20px; align-items: flex-start; justify-content: center;
       width: 100%; max-width: 900px; padding: 0 20px;
@@ -105,7 +103,6 @@
       box-shadow: 0 8px 24px rgba(0,0,0,0.4);
     }
 
-    /* ── header ── */
     .game-header {
       display: flex; align-items: center; justify-content: space-between;
       margin-bottom: 32px; position: relative; 
@@ -128,8 +125,7 @@
     }
     .timer-display.red { color: #ff4d4d; }
 
-    /* ── grid ── */
-        .grid-wrapper { display: flex; justify-content: center; margin-bottom: 28px; position: relative; }
+    .grid-wrapper { display: flex; justify-content: center; margin-bottom: 28px; position: relative; }
     .pause-overlay {
       position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
       font-size: 1.1rem; font-weight: 700; color: #fff; z-index: 20;
@@ -168,7 +164,6 @@
     .cage-label { position: absolute; top: 4px; left: 6px; font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.65); pointer-events: none; z-index: 3; }
     .cell-value { position: relative; z-index: 1; }
 
-    /* ── controls ── */
     .controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
     .btn {
       padding: 12px 16px; border: none; border-radius: 10px; font-weight: 600; font-size: 0.95rem;
@@ -187,7 +182,6 @@
     .mt-restart-btn svg { width: 24px; height: 24px; }
     .mt-restart-btn:hover { color: #fff; background: rgba(255,255,255,0.05); transform: rotate(-90deg); }
 
-    /* ── modal ── */
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
       display: flex; align-items: center; justify-content: center; z-index: 150; visibility: hidden; opacity: 0; transition: opacity 0.2s, visibility 0.2s;
@@ -197,7 +191,6 @@
     .modal-close { position: absolute; top: 12px; right: 16px;background: none; border: none; color: #888; font-size: 1.5rem; cursor: pointer; font-weight: 700; }
     .modal-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 16px; margin-left: 0px;color: #fff; }
     #modalContent { color: #ccc; font-size: 0.95rem; line-height: 1.5; }
-    /* ── Profile Dropdown & Auth ── */
     .user-profile-btn {
       background: rgba(255,102,170,0.1); border: 1px solid var(--osu-pink);
       color: var(--osu-pink); padding: 8px 18px; border-radius: 8px;
@@ -221,7 +214,6 @@
     }
     .dropdown-item:hover { background: rgba(255,102,170,0.1); color: var(--osu-pink); }
 
-        /* ── Footer Styling ── */
     .main-footer {
       width: 100%;
       padding: 30px 0;
@@ -273,7 +265,6 @@
       border-radius: 4px;
     }
 
-    /* Mobile Responsiveness */
     @media (max-width: 600px) {
       .footer-content {
         flex-direction: column;
@@ -390,29 +381,28 @@
   let currentSessionId = null;
   let puzzleData = null;
   let selectedRow = 0, selectedCol = 0, seconds = 0, timerInterval = null;
-  let hintsLeft = 5, checkLeft = 3, money = 200, isPaused = false, gameFinished = false;
+  let hintsLeft = 5, checksLeft = 3, money = 200, isPaused = false, gameFinished = false;
   let cageMap = [];
   let cageColors = [];
 
-  // --- AUTHENTICATION SYNC ---
   let currentUser = null;
 
+  // Fetches current user authentication status from backend
   async function checkAuth() {
       const res = await fetch('/api/me');
       const data = await res.json();
       if (data.logged_in) {
           updateAuthUI(data.username, data.money);
       } else {
-          // If they are a guest, make sure the "Sign In" button sends them back to the main menu
           const signinBtn = document.querySelector('.signin-btn');
           if (signinBtn) signinBtn.onclick = () => window.location.href = '/';
       }
   }
 
+  // Updates top navigation bar with logged-in user info
   function updateAuthUI(username, money) {
       currentUser = username;
       
-      // Swap the Sign In button for the Profile Dropdown
       const signinBtn = document.querySelector('.signin-btn');
       if (signinBtn) {
           signinBtn.outerHTML = `
@@ -430,23 +420,21 @@
           </div>`;
       }
       
-      // Update the money badge
       const moneyDisplay = document.getElementById('moneyDisplay');
       if (moneyDisplay) {
           moneyDisplay.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M14.5 9.5a2.5 2.5 0 0 0-5 0c0 1.38 5 1.12 5 2.5a2.5 2.5 0 0 1-5 0"/></svg> ${money}`;
       }
   }
 
+  // Logs user out and reloads page
   async function logout() {
       await fetch('/api/logout', { method: 'POST' });
       window.location.reload(); 
   }
 
-  // Ping the server to check login status as soon as the page loads
   checkAuth();
   
-  // ---------------------------
-  // Update this to accept dynamic data
+  // Assigns distinct colors to adjacent cages for visual distinction
   function assignCageColors(data) {
     const numCages = data.cages.length;
     const adjacent = []; 
@@ -476,6 +464,7 @@
     return colors;
   }
 
+  // Renders the game board from puzzle data
   function renderGrid(data) {
       const container = document.getElementById('kenkenGrid');
       container.style.gridTemplateColumns = `repeat(${data.size}, 1fr)`;
@@ -517,6 +506,7 @@
       updateHighlights();
   }
 
+  // Highlights selected cell and its row/column
   function selectCell(r, c) { selectedRow = r; selectedCol = c; updateHighlights(); }
   
   function updateHighlights() {
@@ -528,13 +518,14 @@
     });
   }
 
+  // Sends a move command to the backend and updates board state
   async function setCellValue(r, c, val) {
     if (gameFinished || isPaused) return;
     
     const response = await fetch('/api/command', { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ row: r, col: c, val: val, session_id: currentSessionId }) // ADD TOKEN
+        body: JSON.stringify({ row: r, col: c, val: val, session_id: currentSessionId })
     });
     puzzleData = await response.json();
     if (puzzleData.error) { showModal("Error", puzzleData.error); return; }
@@ -545,13 +536,10 @@
         updateTimer();
         
         if (r === 66 && c === 66 && val === 66) {
-            // Auto-Solve used: No money awarded
             showModal('System Override', 'The puzzle was auto-completed by the system engine. Better luck next time!');
         } else {
-            // Legitimate Win!
             const timeString = document.getElementById('timerDisplay').textContent;
             
-            // If logged in, fetch the payout
             if (currentUser) {
                 fetch('/api/save_match', {
                     method: 'POST',
@@ -561,7 +549,6 @@
                 .then(res => res.json())
                 .then(dbData => {
                     if (dbData.success) {
-                        // Update UI with new money balance
                         document.getElementById('moneyDisplay').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M14.5 9.5a2.5 2.5 0 0 0-5 0c0 1.38 5 1.12 5 2.5a2.5 2.5 0 0 1-5 0"/></svg> ${dbData.new_balance}`;
                         
                         showModal('Puzzle Complete!', `
@@ -573,7 +560,6 @@
                     }
                 });
             } else {
-                // Guest mode: Just show the time
                 showModal('Puzzle Complete!', `Time: ${timeString}`);
             }
         }
@@ -586,6 +572,7 @@
     }
   }
 
+  // Keyboard controls for navigation and number entry
   document.addEventListener('keydown', (e) => {
     if (isPaused || gameFinished || !puzzleData) return;
     const sz = puzzleData.size;
@@ -599,6 +586,7 @@
     }
   });
 
+  // Timer management for normal mode
   function startTimer() {
     if (timerInterval) clearInterval(timerInterval);
     seconds = 0; updateTimer();
@@ -610,6 +598,7 @@
     document.getElementById('timerDisplay').classList.toggle('red', isPaused || gameFinished);
   }
   
+  // Pauses or resumes the game
   function togglePause() {
     if (gameFinished) return;
     isPaused = !isPaused;
@@ -618,14 +607,15 @@
     updateTimer();
   }
 
+  // Displays game rules modal
   function showRules() {
     showModal('KenKen Rules', `<ul style="padding-left: 20px;"><li>Fill the grid with numbers from 1 to the grid size.</li><li>Do not repeat any numbers in rows or columns.</li><li>Cages must combine to the target number using the math operation shown.</li></ul>`, true);
   }
 
+  // Requests and applies a hint from the backend
   async function useHint() {
       if (gameFinished || hintsLeft <= 0) return;
       
-      // Trigger the background C thread (NOW SECURED WITH SESSION ID)
       const response = await fetch('/api/command', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -634,7 +624,6 @@
       
       puzzleData = await response.json();
 
-      // Catch backend errors before they freeze the board
       if (puzzleData.error) {
           showModal("Connection Error", puzzleData.error);
           return;
@@ -644,50 +633,47 @@
           hintsLeft--;
           document.getElementById('hintCount').textContent = hintsLeft;
           
-          // Visually move the glowing cursor to the hint cell!
           selectCell(puzzleData.hint.row, puzzleData.hint.col);
           
-          // Actually place the number on the board
           await setCellValue(puzzleData.hint.row, puzzleData.hint.col, puzzleData.hint.val);
       } else {
           showModal('Notice', 'No obvious hints available right now.');
       }
   }
 
+  // Sends check command to highlight incorrect cells
   async function checkBoard() {
-      // Prevent fetching if game is over or out of checks
       if (gameFinished) return;
       if (checksLeft <= 0) {
           showModal('Notice', 'No checks left! You are on your own.');
           return;
       }
 
-      // Send the Check Command (77) to the C engine
       await setCellValue(77, 77, 77);
       
-      // Decrement the counter and update the UI
       checksLeft--;
       document.getElementById('checkCount').textContent = checksLeft;
   }
+  
+  // Triggers auto-solve command
   async function autoSolve() {
       if (gameFinished) return;
-      // Send the Auto-Solve Command (66)
       await setCellValue(66, 66, 66);
   }
 
+  // Confirms board restart
   function confirmRestart() {
     if (gameFinished) { closeModal(); init(); return; }
     showModal('Restart Game', `<div style="text-align:left"><p style="margin-bottom:20px">End current game and start over?</p><div style="display:flex;gap:12px;justify-content:center"><button class="btn" style="background:var(--osu-pink);flex:1;justify-content:center" onclick="closeModal();init()">Yes</button><button class="btn" style="background:#444;flex:1;justify-content:center" onclick="closeModal()">Cancel</button></div></div>`, true);
   }
 
+  // Confirms leaving the game page
   function confirmLeave() {
-    // If the game is already over or hasn't started, just leave
     if (gameFinished || !puzzleData) {
       window.location.href = '/';
       return;
     }
 
-    // Otherwise, show the confirmation modal
     showModal('Leave Game?', `
       <div style="text-align:left">
         <p style="margin-bottom:20px">Your progress will be lost. Are you sure you want to return to the main menu?</p>
@@ -699,6 +685,7 @@
     `, true);
   }
 
+  // Modal display functions
   function showModal(title, message, isHtml) {
     document.getElementById('modalTitle').textContent = title;
     isHtml ? document.getElementById('modalContent').innerHTML = message : document.getElementById('modalContent').textContent = message;
@@ -707,18 +694,16 @@
   
   function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
 
+  // Initializes the game session from URL parameters
   async function init() {
     try {
-        // 1. Read the size from the URL (default to 3 if it's missing)
         const urlParams = new URLSearchParams(window.location.search);
         const gridSize = urlParams.get('size') || 3;
         const rawMode = urlParams.get('mode') || 'normal';
 
-        // 2. Update the UI Text
         document.getElementById('displaySize').textContent = `${gridSize}x${gridSize}`;
         document.getElementById('displayMode').textContent = `${rawMode} Mode`;
 
-        // 3. Send the size to Python so it knows what to generate
         const response = await fetch('/api/start', { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -730,7 +715,7 @@
         
         currentSessionId = puzzleData.session_id;
         
-                hintsLeft = puzzleData.size;
+        hintsLeft = puzzleData.size;
         document.getElementById('hintCount').textContent = hintsLeft;
 
         checksLeft = puzzleData.size;

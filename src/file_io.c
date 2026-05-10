@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/stat.h>   // Added for mkdir()
-#include <sys/types.h>  // Added for system data types
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "../include/game_logic.h"
 
-// Helper function to allocate memory for the board
+// Allocates memory and initializes a new game board structure
 Board* create_board(int size, int num_cages) {
     Board* board = (Board*)malloc(sizeof(Board));
     board->size = size;
@@ -14,7 +14,6 @@ Board* create_board(int size, int num_cages) {
     board->hint_val = 0;
     board->hint_ready = 0;
 
-    // Allocate 2D array for the grid
     board->grid = (Cell**)malloc(size * sizeof(Cell*));
     for (int i = 0; i < size; i++) {
         board->grid[i] = (Cell*)malloc(size * sizeof(Cell));
@@ -25,7 +24,6 @@ Board* create_board(int size, int num_cages) {
             board->grid[i][j].cage = NULL;
         }
     }
-    // Allocate the solution and error matrices
     board->solution = (int**)malloc(size * sizeof(int*));
     board->errors = (int**)malloc(size * sizeof(int*));
     for (int i = 0; i < size; i++) {
@@ -33,21 +31,18 @@ Board* create_board(int size, int num_cages) {
         board->errors[i] = (int*)calloc(size, sizeof(int));
     }
 
-    // Allocate array for the cages
     board->cages = (Cage*)malloc(num_cages * sizeof(Cage));
     return board;
 }
 
-// Helper function to prevent memory leaks
+// Frees all dynamically allocated memory for a board
 void free_board(Board* board) {
     if (!board) return;
     
-    // Free the dynamically allocated cell pointer arrays inside each cage
     for (int i = 0; i < board->num_cages; i++) {
         free(board->cages[i].cells);
     }
     
-    // Free the 2D grid
     for (int i = 0; i < board->size; i++) {
         free(board->grid[i]);
     }
@@ -62,7 +57,7 @@ void free_board(Board* board) {
     free(board);
 }
 
-// Reads the text file and populates the Board structure
+// Reads puzzle file and populates board structure with cages and solution cache
 Board* load_puzzle(const char* filename) {
     FILE* file = fopen(filename, "r");
     if (!file) {
@@ -89,7 +84,6 @@ Board* load_puzzle(const char* filename) {
         board->cages[i].num_cells = num_cells;
         board->cages[i].cells = (Cell**)malloc(num_cells * sizeof(Cell*));
         
-        // Map character to our Enum
         switch(op_char) {
             case '+': board->cages[i].op = OP_ADD; break;
             case '-': board->cages[i].op = OP_SUB; break;
@@ -98,21 +92,17 @@ Board* load_puzzle(const char* filename) {
             default:  board->cages[i].op = OP_NONE; break;
         }
 
-        // Read the coordinates for each cell in this cage
         for (int j = 0; j < num_cells; j++) {
             int r, c;
             fscanf(file, "%d %d", &r, &c);
             
-            // Link the cage to the cell, and the cell back to the cage
             board->cages[i].cells[j] = &(board->grid[r][c]);
             board->grid[r][c].cage = &(board->cages[i]);
         }
     }
 
-    // --- NEW: Read the hidden solution cache (if it exists) ---
     for (int r = 0; r < size; r++) {
         for (int c = 0; c < size; c++) {
-            // If fscanf fails, it just leaves the cell as 0 (safe fallback)
             if (fscanf(file, "%d", &board->solution[r][c]) != 1) {
                 board->solution[r][c] = 0; 
             }
@@ -123,21 +113,16 @@ Board* load_puzzle(const char* filename) {
     return board;
 }
 
-// Save the current numbers on the board to a dedicated saves folder
+// Saves current board state to a file in the saves directory
 void save_game_state(Board* board) {
-    // 1. Ask the operating system to create the "saves" directory.
-    // The 0777 sets the folder permissions allowing read/write access.
-    // If the folder already exists, mkdir simply ignores this command safely.
     mkdir("saves", 0777);
 
-    // 2. Open the file inside the newly created (or existing) directory
     FILE* file = fopen("saves/savegame.txt", "w");
     if (!file) {
         printf("Error: Could not create save file in the 'saves' directory.\n");
         return;
     }
 
-    // 3. Write the grid values to the file
     for (int i = 0; i < board->size; i++) {
         for (int j = 0; j < board->size; j++) {
             fprintf(file, "%d ", board->grid[i][j].value);
