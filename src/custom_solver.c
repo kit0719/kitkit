@@ -13,6 +13,7 @@ Cage cages[MAX_CAGES];
 int grid[MAX_SIZE][MAX_SIZE];
 int cage_map[MAX_SIZE][MAX_SIZE];
 
+// Check if placing a value violates row/column constraints
 bool is_valid_row_col(int r, int c, int val) {
     for (int i = 0; i < N; i++) {
         if (grid[r][i] == val) return false;
@@ -21,6 +22,7 @@ bool is_valid_row_col(int r, int c, int val) {
     return true;
 }
 
+// Verify that a cage's arithmetic condition is satisfied
 bool is_cage_valid(int c_idx) {
     Cage cage = cages[c_idx];
     if (cage.op == '.' || cage.op == '=' || cage.op == ' ') return grid[cage.cells[0].r][cage.cells[0].c] == cage.target;
@@ -48,6 +50,7 @@ bool is_cage_valid(int c_idx) {
     return false;
 }
 
+// Recursive backtracking solver for KenKen puzzle
 bool solve(int r, int c) {
     if (r == N) return true;
     int next_r = r, next_c = c + 1;
@@ -69,10 +72,10 @@ bool solve(int r, int c) {
     return false;
 }
 
+// Main driver: reads puzzle file, solves it, and writes solution
 int main(int argc, char *argv[]) {
     if (argc < 2) { printf("Error: No file provided.\n"); return 1; }
     
-    // 1. Read the file
     FILE *file = fopen(argv[1], "r");
     if (!file) { printf("Error: Cannot open file.\n"); return 1; }
     if (fscanf(file, "%d %d", &N, &num_cages) != 2) return 1;
@@ -88,16 +91,11 @@ int main(int argc, char *argv[]) {
     }
     fclose(file);
 
-    // 2. Solve and Append the Solution Cache
-    // 2. Solve and Rewrite a Sanitized File
     if (solve(0, 0)) {
-        // "w" mode completely overwrites the user's messy file with our clean data
         file = fopen(argv[1], "w"); 
         
-        // Write the clean header
         fprintf(file, "%d %d\n", N, num_cages);
         
-        // Write the clean cages perfectly formatted
         for (int i = 0; i < num_cages; i++) {
             fprintf(file, "%d %c %d ", cages[i].target, cages[i].op, cages[i].num_cells);
             for (int j = 0; j < cages[i].num_cells; j++) {
@@ -106,7 +104,6 @@ int main(int argc, char *argv[]) {
             fprintf(file, "\n");
         }
         
-        // Write the Solution Cache at the bottom
         for (int r = 0; r < N; r++) {
             for (int c = 0; c < N; c++) {
                 fprintf(file, "%d ", grid[r][c]);
