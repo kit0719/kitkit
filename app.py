@@ -74,11 +74,17 @@ def start_game():
     # 1. Get the requested grid size from the frontend (default to 3)
     data = request.json or {}
     size = data.get('size', 3)
+    mode = data.get('mode', 'normal')
     
     # 2. RUN THE GENERATOR FIRST!
     # We use subprocess.run to make Python pause and wait until the C program finishes generating
-    print(f"Generating new {size}x{size} puzzle...")
-    subprocess.run(['./kenken', '--generate', str(size)])
+    if mode == 'custom':
+        file_path = 'test_cases/custom.txt'
+        print("Loading custom board...")
+    else:
+        print(f"Generating new {size}x{size} puzzle...")
+        subprocess.run(['./kenken', '--generate', str(size)])
+        file_path = f'test_cases/generated_{size}x{size}.txt'
     
     # 3. Spawn the C game engine using the newly generated file
     file_path = f'test_cases/generated_{size}x{size}.txt'
@@ -307,6 +313,27 @@ def get_leaderboard():
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         conn.close()
+
+@app.route('/api/upload', methods=['POST'])
+def upload_custom():
+    data = request.json
+    content = data.get('content')
+    size = data.get('size')
+    
+    file_path = 'test_cases/custom.txt'
+    
+    # 1. Save the user's uploaded text to a custom file
+    with open(file_path, 'w') as f:
+        f.write(content)
+        
+    # 2. Run the standalone C solver to generate the Solution Cache
+    print(f"Solving custom {size}x{size} puzzle...")
+    result = subprocess.run(['./custom_solver', file_path], capture_output=True, text=True)
+    
+    if "SOLVED" in result.stdout:
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False, 'error': 'The C engine determined this puzzle is mathematically unsolvable.'})
 
 if __name__ == '__main__':
     print("🚀 KenKen Web Server starting on http://127.0.0.1:8888")
