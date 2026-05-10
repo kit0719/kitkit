@@ -529,7 +529,7 @@ let puzzleData = null;
   async function setCellValue(r, c, val) {
     if (gameFinished || isPaused) return;
     
-    const response = await fetch('/api/start', { 
+    const response = await fetch('/api/command', { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         // Add mode: rawMode right here!
