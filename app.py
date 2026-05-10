@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify, render_template
 import subprocess
 import sqlite3
 import os
+import uuid
+import json
 from flask import Flask, render_template, request, jsonify, session
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -48,7 +50,7 @@ def init_db():
 # Run the initialization right away
 init_db()
 # A global variable to hold our running C process
-game_process = None
+active_games = {}
 
 @app.route('/')
 def index():
@@ -65,79 +67,80 @@ def rush_page():
 
 @app.route('/api/start', methods=['POST'])
 def start_game():
-    global game_process
+    # 1. Generate a unique ID token for this specific player's board
+    match_token = str(uuid.uuid4())
     
-    if game_process:
-        game_process.terminate()
-        
     data = request.json or {}
     size = data.get('size', 3)
     mode = data.get('mode', 'normal') 
     
-    # 1. Determine which file to load
+    # 2. SAFEGUARD: Ensure the folder exists so the C engine doesn't crash!
+    os.makedirs('test_cases', exist_ok=True)
+    unique_file_path = f'test_cases/board_{match_token}.txt'
+    
     if mode == 'custom':
-        file_path = 'test_cases/custom.txt'
-        print("Loading custom board...")
+        import shutil
+        shutil.copyfile('test_cases/custom.txt', unique_file_path)
     else:
-        print(f"Generating new {size}x{size} puzzle...")
+        gen_file = f'test_cases/generated_{size}x{size}.txt'
         subprocess.run(['./kenken', '--generate', str(size)])
-        file_path = f'test_cases/generated_{size}x{size}.txt'
+        os.rename(gen_file, unique_file_path)
         
-    # 2. Boot the C Engine using the selected file
-    game_process = subprocess.Popen(
-        ['./kenken', file_path, '--web'],
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True, 
-        bufsize=1  
+    # 3. Boot the C Engine specifically for this user
+    active_games[match_token] = subprocess.Popen(
+        ['./kenken', unique_file_path, '--web'],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE, text=True, bufsize=1  
     )
     
-    # 3. Read the initial JSON board state
     initial_state = ""
-    for line in iter(game_process.stdout.readline, ''):
+    for line in iter(active_games[match_token].stdout.readline, ''):
         initial_state += line
         if line.strip() == "}": 
             break
             
-    return app.response_class(
-        response=initial_state,
-        status=200,
-        mimetype='application/json'
-    )
+    # 4. Inject the token into the JSON so the browser can save it
+    board_data = json.loads(initial_state)
+    board_data['session_id'] = match_token
+    return jsonify(board_data)
 
 @app.route('/api/command', methods=['POST'])
 def send_command():
-    global game_process
-    if not game_process:
-        return jsonify({"error": "Game not started"}), 400
-        
-    # Get the row, col, and value sent by the web browser
     data = request.json
-    r = data.get('row', -1)
-    c = data.get('col', -1)
-    v = data.get('val', -1)
+    match_token = data.get('session_id')
     
-    # Format it exactly how our C program's scanf expects it
-    command = f"{r} {c} {v}\n"
+    if not match_token or match_token not in active_games:
+        return jsonify({'error': 'Game session lost. Please refresh the page.'})
+
+    # Route the move to THIS specific user's C process
+    user_process = active_games[match_token]
+    r, c, v = data.get('row', -1), data.get('col', -1), data.get('val', -1)
     
-    # Pipe the command directly into the running C program
-    game_process.stdin.write(command)
-    game_process.stdin.flush()
+    user_process.stdin.write(f"{r} {c} {v}\n")
+    user_process.stdin.flush()
     
-    # Read the updated JSON board state back from the C program
     new_state = ""
-    for line in iter(game_process.stdout.readline, ''):
+    for line in iter(user_process.stdout.readline, ''):
         new_state += line
-        if line.strip() == "}":
+        if line.strip() == "}": 
             break
             
-    return app.response_class(
-        response=new_state,
-        status=200,
-        mimetype='application/json'
-    )
+    board_data = json.loads(new_state)
+    board_data['session_id'] = match_token # Give the token back!
+    return jsonify(board_data)
 
+@app.route('/api/stop', methods=['POST'])
+def stop_game():
+    """Cleans up the C process when a player leaves."""
+    data = request.json or {}
+    match_token = data.get('session_id')
+    if match_token and match_token in active_games:
+        active_games[match_token].terminate()
+        del active_games[match_token]
+        file_path = f'test_cases/board_{match_token}.txt'
+        if os.path.exists(file_path):
+            os.remove(file_path)
+    return jsonify({'success': True})
 # ==========================================
 # AUTHENTICATION & USER API
 # ==========================================
