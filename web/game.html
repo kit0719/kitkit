@@ -533,7 +533,7 @@ let puzzleData = null;
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         // Add mode: rawMode right here!
-        body: JSON.stringify({ size: parseInt(gridSize), mode: rawMode }) 
+        body: JSON.stringify({ row: r, col: c, val: val })
     });
     
     puzzleData = await response.json();
