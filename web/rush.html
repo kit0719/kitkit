@@ -635,10 +635,10 @@
 
   function confirmLeave() {
     // If the game is already over or hasn't started, just leave
-    // if (gameFinished || !puzzleData) {
-    //   window.location.href = 'index.html';
-    //   return;
-    // }
+    if (gameFinished || !puzzleData) {
+      window.location.href = 'index.html';
+      return;
+    }
 
     // Otherwise, show the confirmation modal
     showModal('Leave Game?', `
