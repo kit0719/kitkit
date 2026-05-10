@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="img/favicon.png">
-  <title>Input Puzzle · KitKit</title>
+  <title>Layout · KitKit</title>
   <style>
     :root {
       --osu-pink: #ff66aa;
@@ -132,75 +132,6 @@
     }
 
     .main-wrapper { flex: 1; max-width: 700px; display: flex; flex-direction: column; gap: 24px; }
-    
-    /* ── Updated Header Section ── */
-    .header-section {
-      height: 56px;
-      display: flex;
-      align-items: center;
-      font-size: 40px;
-      font-weight: 500;
-      margin-bottom: 20px;
-      letter-spacing: -0.5px;
-    }
-
-    .title-size { color: #fff; }
-    .title-separator { margin: 0 12px; color: #555; }
-    .title-mode { 
-      font-weight: 700;
-      color: var(--osu-pink); 
-      text-transform: capitalize; 
-    }
-
-    /* ── Content Containers ── */
-    .content-box {
-      background: var(--osu-dark); border-radius: 16px; padding: 32px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.4); border-top: 4px solid var(--osu-pink);
-    }
-
-    /* ── Drag & Drop Zone ── */
-    .drop-zone {
-      width: 100%; border: 2px dashed #444; border-radius: 16px;
-      padding: 40px 20px; text-align: center; background: var(--osu-darker);
-      cursor: pointer; transition: all 0.3s ease; position: relative;
-      overflow: hidden;
-    }
-    .drop-zone:hover, .drop-zone.dragover {
-      border-color: var(--osu-pink); background: rgba(255, 102, 170, 0.05);
-    }
-    .drop-zone svg { width: 48px; height: 48px; color: #666; margin-bottom: 16px; transition: color 0.3s; }
-    .drop-zone:hover svg, .drop-zone.dragover svg { color: var(--osu-pink); }
-    .drop-zone h3 { font-size: 1.2rem; color: #fff; margin-bottom: 8px; }
-    .drop-zone p { color: #888; font-size: 0.95rem; }
-    .drop-zone input[type="file"] {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      opacity: 0; cursor: pointer;
-    }
-
-    /* Status Message */
-    .status-msg { margin-top: 16px; font-weight: 600; font-size: 0.95rem; display: none; padding: 12px; border-radius: 8px; }
-    .status-msg.error { display: block; background: rgba(255, 77, 77, 0.1); color: #ff4d4d; border: 1px solid rgba(255, 77, 77, 0.3); }
-    .status-msg.success { display: block; background: rgba(0, 223, 192, 0.1); color: #00dfc0; border: 1px solid rgba(0, 223, 192, 0.3); }
-
-    /* ── Format Documentation ── */
-    .format-guide { margin-top: 24px; }
-    .format-guide h3 { font-size: 1.4rem; color: #fff; margin-bottom: 16px; border-bottom: 1px solid #333; padding-bottom: 8px; }
-    .format-guide p { color: #aaa; line-height: 1.6; margin-bottom: 16px; font-size: 0.95rem; }
-    
-    .code-block {
-      background: #111; padding: 16px; border-radius: 8px; font-family: var(--font-mono);
-      color: #00dfc0; font-size: 0.9rem; line-height: 1.5; border: 1px solid #333;
-      margin-bottom: 24px; overflow-x: auto; white-space: pre;
-    }
-    .code-comment { color: #666; }
-
-    .example-grid {
-      display: flex; gap: 20px; align-items: flex-start;
-      background: #111; padding: 20px; border-radius: 12px; border: 1px solid #333;
-    }
-    .example-grid img { width: 100%; max-width: 250px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-    .example-text { flex: 1; }
-    .example-text h4 { color: #fff; margin-bottom: 8px; font-size: 1.1rem; }
 
     /* Modal Overlay */
     .modal-overlay {
@@ -282,11 +213,11 @@
     <div class="nav-left">
       <img class="nav-logo" src="img/kitkit.png" style="cursor: pointer;" onclick="window.location.href = 'index.html';">
       <button class="nav-icon" data-tooltip="Input Puzzle" onclick="window.location.href='input.html'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
-      <button class="nav-icon" data-tooltip="Tutorial" onclick="window.location.href='tutorial.html'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></button> 
+      <button class="nav-icon" data-tooltip="Tutorial"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></button>
+      <button class="nav-icon" data-tooltip="Leaderboard" onclick="window.location.href='leaderboard.html'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7c0 3.31 2.69 6 6 6s6-2.69 6-6V2z"/></svg></button>
       <button class="nav-icon" data-tooltip="Shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></button>
       <button class="nav-icon" data-tooltip="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
-      <button class="nav-icon" data-tooltip="Leaderboard" onclick="window.location.href='leaderboard.html'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7c0 3.31 2.69 6 6 6s6-2.69 6-6V2z"/></svg></button>
-    </div>
+      </div>
     <div class="nav-right">
       <button class="signin-btn" onclick="openAuthModal()">Sign In</button>
       <div class="money-badge" id="moneyDisplay">
@@ -296,63 +227,10 @@
     </div>
   </div>
 
-  <div class="page-layout">
-    <button class="back-btn" title="Back to Menu" onclick="window.location.href='index.html'">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-    </button>
-
-    <div class="main-wrapper">
-      
-      <div class="header-section">
-        <span class="title-size">KitKit</span>
-        <span class="title-separator">·</span>
-        <span class="title-mode">Input Puzzle</span>
-      </div>
-
-      <div class="content-box">
-        <div class="drop-zone" id="dropZone">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
-          <h3>Drag & Drop your .txt file here</h3>
-          <p>or click to browse from your computer</p>
-          <input type="file" id="fileInput" accept=".txt">
-        </div>
-        <div id="statusMsg" class="status-msg"></div>
-      </div>
-
-      <div class="content-box format-guide">
-        <h3>File Format Rules</h3>
-        <p>Your text file must follow the KitKit engine parsing standard. The first line establishes the grid structure, and every subsequent line maps a specific cage.</p>
-        
-        <div class="code-block">
-<span class="code-comment"># Line 1: [Grid Size] [Total Cages]</span>
-N C
-
-<span class="code-comment"># Following Lines: [Target] [Operator] [Size] [Row1] [Col1] [Row2] [Col2]...</span>
-TARGET OP SIZE R C R C ...</div>
-        
-        <div class="example-grid">
-          <img src="img/3x3kkexample.png" alt="3x3 KitKit Example" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'250\' height=\'250\'><rect width=\'250\' height=\'250\' fill=\'%23222\'/><text x=\'50%\' y=\'50%\' fill=\'%23888\' font-family=\'sans-serif\' font-size=\'14\' text-anchor=\'middle\' dominant-baseline=\'middle\'>example.jpg missing</text></svg>'">
-          
-          <div class="example-text">
-            <h4>3x3 Example Breakdown</h4>
-            <p style="font-size: 0.9rem; margin-bottom: 8px;">A 3x3 grid with 5 cages would look like this inside the `.txt` file:</p>
-            <div class="code-block" style="margin-bottom: 0; padding: 12px;">3 5
-4 + 2 0 0 1 0
-2 / 2 0 1 0 2
-1 - 2 1 1 1 2
-6 * 2 2 0 2 1
-1 . 1 2 2</div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
 
   <div class="modal-overlay" id="authModal" onclick="closeAuthModal()">
     <div class="auth-box" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="closeAuthModal()">×</button>
       
       <div class="auth-tabs">
         <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Sign In</button>
@@ -481,115 +359,6 @@ TARGET OP SIZE R C R C ...</div>
     }
 
     checkAuth();
-
-
-    // --- DRAG & DROP LOGIC ---
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
-    const statusMsg = document.getElementById('statusMsg');
-
-    dropZone.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      dropZone.classList.add('dragover');
-    });
-
-    dropZone.addEventListener('dragleave', () => {
-      dropZone.classList.remove('dragover');
-    });
-
-    dropZone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropZone.classList.remove('dragover');
-      if (e.dataTransfer.files.length) {
-        handleFile(e.dataTransfer.files[0]);
-      }
-    });
-
-    fileInput.addEventListener('change', (e) => {
-      if (e.target.files.length) {
-        handleFile(e.target.files[0]);
-      }
-    });
-
-    function showStatus(message, isError) {
-      statusMsg.textContent = message;
-      statusMsg.className = 'status-msg ' + (isError ? 'error' : 'success');
-    }
-
-    function handleFile(file) {
-      if (!file.name.toLowerCase().endsWith('.txt') && file.type !== 'text/plain') {
-        showStatus('Error: Please upload a valid .txt file.', true);
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const text = e.target.result;
-        validatePuzzleData(text, file.name);
-      };
-      reader.onerror = function() {
-        showStatus('Error: Could not read the file.', true);
-      };
-      reader.readAsText(file);
-    }
-
-    function validatePuzzleData(content, fileName) {
-      try {
-        const lines = content.trim().split('\n').map(l => l.trim()).filter(l => l.length > 0);
-        
-        if (lines.length < 2) throw new Error("File is empty or missing cage definitions.");
-
-        const headerTokens = lines[0].split(/\s+/);
-        if (headerTokens.length !== 2) throw new Error("Header must contain exactly 2 numbers: [Grid Size] [Total Cages].");
-        
-        const size = parseInt(headerTokens[0]);
-        const numCages = parseInt(headerTokens[1]);
-
-        if (isNaN(size) || isNaN(numCages)) throw new Error("Header values must be valid numbers.");
-        if (size < 3 || size > 9) throw new Error(`Grid size ${size} is unsupported. Must be between 3 and 9.`);
-        if (lines.length - 1 !== numCages) throw new Error(`Header declares ${numCages} cages, but found ${lines.length - 1} cage definitions.`);
-
-        for (let i = 1; i <= numCages; i++) {
-          const tokens = lines[i].split(/\s+/);
-          if (tokens.length < 5) throw new Error(`Cage definition on line ${i + 1} is incomplete.`);
-          
-          const op = tokens[1];
-          const validOps = ['+', '-', '*', '/', '.', ' ', '='];
-          if (!validOps.includes(op)) throw new Error(`Invalid operator '${op}' on line ${i + 1}.`);
-          
-          const expectedCells = parseInt(tokens[2]);
-          if (tokens.length !== 3 + (expectedCells * 2)) {
-             throw new Error(`Coordinate mismatch on line ${i + 1}. Expected ${expectedCells} pairs of (Row, Col).`);
-          }
-        }
-
-        showStatus(`Validating puzzle mathematics...`, false);
-        
-        fetch('/api/upload', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content: content, size: size })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                showStatus(`Success! Routing to game...`, false);
-                setTimeout(() => {
-                    // Send them to game.html, passing 'custom' as the mode!
-                    window.location.href = `game.html?mode=custom&size=${size}`;
-                }, 800);
-            } else {
-                showStatus(`Error: ${data.error}`, true);
-            }
-        })
-        .catch(err => showStatus(`Backend Error: Is the Python server running?`, true));
-
-      } catch (error) {
-        showStatus(`Error: ${error.message}`, true);
-      }
-      
-      fileInput.value = '';
-    }
   </script>
 </body>
 </html>
