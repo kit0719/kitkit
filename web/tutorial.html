@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tutorial · KitKit</title>
+  <style>
+    :root {
+      --osu-pink: #ff66aa;
+      --osu-dark: #1a1a1a;
+      --osu-darker: #111111;
+      --osu-text: #e1e1e1;
+      --font-sf: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      --font-mono: "SF Camera", "SF Compact Rounded", "SF Mono", "Roboto Mono", monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      background: #0d0d0d; color: var(--osu-text); display: flex;
+      flex-direction: column; align-items: center; min-height: 100vh;
+      font-family: var(--font-sf); -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── Top Navigation Bar ── */
+    .top-nav {
+      width: 100%; max-width: 900px; display: flex; justify-content: space-between;
+      align-items: center; padding: 20px 30px; gap: 16px; margin-bottom: 20px;
+      z-index: 100;
+    }
+    .nav-left { display: flex; align-items: center; gap: 16px; }
+    
+    .nav-logo { height: 50px; padding-right: 10px; cursor: pointer; transition: transform 0.2s; }
+    .nav-logo:hover { transform: scale(1.05); }
+
+    .nav-icon {
+      position: relative; background: transparent; border: 1px solid #444;
+      color: #ddd; width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: 0.2s; text-decoration: none;
+    }
+    .nav-icon svg { width: 20px; height: 20px; }
+    .nav-icon:hover, .nav-icon.active { border-color: var(--osu-pink); color: var(--osu-pink); background: rgba(255, 102, 170, 0.1); }
+    .nav-icon::after {
+      content: attr(data-tooltip); position: absolute; bottom: -32px; left: 50%;
+      transform: translateX(-50%); background: #333; color: #eee; padding: 6px 12px;
+      border-radius: 6px; font-size: 0.75rem; white-space: nowrap; opacity: 0;
+      pointer-events: none; transition: opacity 0.2s; z-index: 10; font-weight: 600;
+    }
+    .nav-icon:hover::after { opacity: 1; }
+
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .signin-btn {
+      background: transparent; border: 1px solid #444; color: #ddd;
+      padding: 8px 18px; border-radius: 8px; cursor: pointer;
+      font-weight: 600; font-size: 0.85rem; transition: 0.2s;
+    }
+    .signin-btn:hover { border-color: var(--osu-pink); color: var(--osu-pink); }
+    .money-badge {
+      font-size: 0.9rem; color: #00dfc0; background: #222; padding: 6px 16px;
+      border-radius: 20px; display: flex; align-items: center; gap: 6px; font-weight: 600;
+    }
+    .money-badge svg { width: 18px; height: 18px; }
+
+    /* ── Layout (Back btn + Content) ── */
+    .page-layout {
+      display: flex; gap: 20px; align-items: flex-start; justify-content: center;
+      width: 100%; max-width: 900px; padding: 0 20px 80px;
+    }
+
+    .back-btn {
+      width: 56px; height: 56px; background: #222; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: #ddd; box-shadow: 0 4px 12px rgba(0,0,0,0.5); cursor: pointer;
+      border: 2px solid #444; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      flex-shrink: 0; position: sticky; top: 24px;
+    }
+    .back-btn svg { width: 24px; height: 24px; }
+    .back-btn:hover { background: var(--osu-pink); border-color: var(--osu-pink); color: #fff; transform: scale(1.05) translateX(-3px); }
+
+    /* ── Tutorial Content ── */
+    .tutorial-wrapper { flex: 1; max-width: 700px; display: flex; flex-direction: column; gap: 60px; }
+
+    .hero-section { text-align: center; margin-bottom: 20px; padding: 40px 0; border-bottom: 1px solid #222; }
+    .hero-section h1 { font-size: 3.5rem; font-weight: 800; color: #fff; letter-spacing: -0.03em; margin-bottom: 16px; }
+    .hero-section span { color: var(--osu-pink); }
+    .hero-section p { font-size: 1.2rem; color: #888; line-height: 1.5; max-width: 500px; margin: 0 auto; }
+
+    .tutorial-step {
+      display: flex; flex-direction: column; gap: 24px;
+      opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .tutorial-step.visible { opacity: 1; transform: translateY(0); }
+
+    .step-header { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; }
+    .step-num { 
+      background: rgba(255,102,170,0.15); color: var(--osu-pink); width: 40px; height: 40px; 
+      border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+      font-weight: 800; font-size: 1.2rem; border: 2px solid var(--osu-pink);
+    }
+    .step-title { font-size: 1.8rem; font-weight: 700; color: #fff; letter-spacing: -0.01em; }
+    .step-desc { font-size: 1.1rem; color: #aaa; line-height: 1.6; }
+
+    /* ── Visual Demo Blocks ── */
+    .demo-box {
+      background: var(--osu-dark); border-radius: 16px; padding: 32px;
+      border: 1px solid #333; display: flex; justify-content: center; align-items: center;
+      gap: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); flex-wrap: wrap;
+    }
+
+    /* CSS Mini-Grid for Demo */
+    .mini-grid { display: grid; gap: 4px; background: #111; padding: 4px; border-radius: 12px; }
+    .m-cell {
+      width: 60px; height: 60px; background: #2a2a2a; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; font-weight: 700; color: #fff; position: relative;
+    }
+    .m-cage-label { position: absolute; top: 4px; left: 6px; font-size: 0.6rem; font-weight: 800; color: rgba(255,255,255,0.7); }
+    
+    /* Demo specific styles */
+    .correct-cell { background: #1e4b3c !important; }
+    .error-cell { background: #4a1e1e !important; box-shadow: 0 0 0 2px #ff4757; }
+    .cage-demo { background: #2b3b6b !important; }
+    .selected-demo { box-shadow: 0 0 0 3px #00dfc0, 0 0 15px rgba(0, 223, 192, 0.4); z-index: 2; filter: brightness(1.2); }
+
+    .demo-caption { text-align: center; color: #888; font-size: 0.9rem; margin-top: 12px; font-weight: 600; }
+    .demo-group { display: flex; flex-direction: column; align-items: center; }
+
+    /* Controls List */
+    .controls-list { list-style: none; display: flex; flex-direction: column; gap: 16px; }
+    .controls-list li { display: flex; align-items: center; gap: 16px; background: var(--osu-dark); padding: 16px 24px; border-radius: 12px; border: 1px solid #333; }
+    .kbd { background: #222; border: 1px solid #555; padding: 6px 12px; border-radius: 6px; color: #fff; font-family: var(--font-mono); font-size: 0.9rem; box-shadow: 0 4px 0 #111; }
+    .controls-list p { color: #aaa; font-size: 1rem; margin: 0; }
+
+    .play-now-container { text-align: center; margin-top: 40px; }
+    .play-now-btn {
+      background: var(--osu-pink); color: #000; padding: 16px 48px; border-radius: 30px;
+      font-size: 1.2rem; font-weight: 800; text-decoration: none; display: inline-flex;
+      align-items: center; gap: 12px; transition: all 0.3s;
+    }
+    .play-now-btn:hover { transform: translateY(-4px); box-shadow: 0 10px 25px rgba(255,102,170,0.3); }
+    /* ── Profile Dropdown & Auth Modal ── */
+    .user-profile-btn {
+      background: rgba(255,102,170,0.1); border: 1px solid var(--osu-pink);
+      color: var(--osu-pink); padding: 8px 18px; border-radius: 8px;
+      font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; gap: 8px; align-items: center;
+    }
+    .profile-wrapper { position: relative; display: inline-block; }
+    .profile-dropdown {
+        position: absolute; top: 110%; right: 0; background: var(--osu-dark);
+        border: 1px solid #333; border-radius: 12px; padding: 8px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5); opacity: 0; visibility: hidden;
+        transform: translateY(-10px); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); min-width: 160px; z-index: 100;
+    }
+    .profile-wrapper:hover .profile-dropdown, .profile-wrapper:focus-within .profile-dropdown {
+        opacity: 1; visibility: visible; transform: translateY(0);
+    }
+    .dropdown-item {
+        width: 100%; text-align: left; background: transparent; border: none;
+        color: #ddd; padding: 10px 16px; border-radius: 8px; cursor: pointer;
+        font-size: 0.95rem; font-weight: 600; font-family: var(--font-sf); transition: 0.2s;
+        display: flex; gap: 10px; align-items: center;
+    }
+    .dropdown-item:hover { background: rgba(255,102,170,0.1); color: var(--osu-pink); }
+    
+    .auth-box {
+      background: var(--osu-dark); border-radius: 20px; padding: 32px;
+      max-width: 400px; width: 90%; position: relative; border-top: 4px solid var(--osu-pink);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.7);
+    }
+    .auth-tabs { display: flex; gap: 12px; margin-bottom: 24px; }
+    .auth-tab {
+      flex: 1; background: transparent; border: none; color: #888; font-size: 1.1rem;
+      font-weight: 700; padding-bottom: 12px; cursor: pointer; border-bottom: 2px solid #333; transition: 0.2s;
+    }
+    .auth-tab.active { color: var(--osu-pink); border-bottom-color: var(--osu-pink); }
+    .auth-input {
+      width: 100%; background: #111; border: 2px solid #333; color: #fff;
+      padding: 14px 16px; border-radius: 12px; font-size: 1rem; margin-bottom: 16px;
+      outline: none; transition: 0.2s; font-family: var(--font-sf);
+    }
+    .auth-input:focus { border-color: var(--osu-pink); }
+    .auth-submit {
+      width: 100%; background: var(--osu-pink); color: #fff; border: none;
+      padding: 14px; border-radius: 12px; font-size: 1.1rem; font-weight: 700;
+      cursor: pointer; transition: 0.2s; margin-top: 8px; font-family: var(--font-sf);
+    }
+    .auth-submit:hover { filter: brightness(1.1); transform: translateY(-2px); }
+    .auth-error { color: #ff4d4d; font-size: 0.9rem; margin-bottom: 12px; text-align: center; min-height: 20px;}
+    
+    /* Modal Overlay fix for Tutorial Page */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center; z-index: 150;
+      visibility: hidden; opacity: 0; transition: opacity 0.2s, visibility 0.2s;
+    }
+    .modal-overlay.active { visibility: visible; opacity: 1; }
+
+  </style>
+</head>
+<body>
+
+  <div class="top-nav">
+    <div class="nav-left">
+      <img class="nav-logo" src="img/kitkit.png" style="cursor: pointer;" onclick="window.location.href = 'index.html';">
+      <a href="input.html" class="nav-icon" data-tooltip="Input Puzzle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></a>
+      <a href="tutorial.html" class="nav-icon active" data-tooltip="Tutorial"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></a>
+      <button class="nav-icon" data-tooltip="Shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></button>
+      <button class="nav-icon" data-tooltip="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+      <a href="leaderboard.html" class="nav-icon" data-tooltip="Leaderboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7c0 3.31 2.69 6 6 6s6-2.69 6-6V2z"/></svg></a>
+    </div>
+    <div class="nav-right">
+      <button class="signin-btn" id="navSignInBtn" onclick="openAuthModal()">Sign In</button>
+      <div class="money-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M14.5 9.5a2.5 2.5 0 0 0-5 0c0 1.38 5 1.12 5 2.5a2.5 2.5 0 0 1-5 0"/></svg>
+        200
+      </div>
+    </div>
+  </div>
+
+  <div class="page-layout">
+    <button class="back-btn" title="Back to Menu" onclick="window.location.href='index.html'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+
+    <div class="tutorial-wrapper">
+      
+      <div class="hero-section">
+        <h1>Master the <span>Grid.</span></h1>
+        <p>KitKit is a logic puzzle that combines math and Sudoku. Learn the rules below and become a grandmaster.</p>
+      </div>
+
+      <div class="tutorial-step">
+        <div class="step-header">
+          <div class="step-num">1</div>
+          <div class="step-title">No Duplicates</div>
+        </div>
+        <p class="step-desc">In an <strong>NxN grid</strong>, you must fill the board using numbers <strong>1 through N</strong>. Just like Sudoku, you cannot repeat a number in any single row or column.</p>
+        
+        <div class="demo-box">
+          <div class="demo-group">
+            <div class="mini-grid" style="grid-template-columns: repeat(3, 1fr);">
+              <div class="m-cell correct-cell">1</div>
+              <div class="m-cell correct-cell">2</div>
+              <div class="m-cell correct-cell">3</div>
+            </div>
+            <div class="demo-caption" style="color: #00dfc0;">✓ Valid Row</div>
+          </div>
+          <div class="demo-group">
+            <div class="mini-grid" style="grid-template-columns: repeat(3, 1fr);">
+              <div class="m-cell error-cell">2</div>
+              <div class="m-cell">1</div>
+              <div class="m-cell error-cell">2</div>
+            </div>
+            <div class="demo-caption" style="color: #ff4d4d;">✗ Invalid Row</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tutorial-step">
+        <div class="step-header">
+          <div class="step-num">2</div>
+          <div class="step-title">The Cages & Math</div>
+        </div>
+        <p class="step-desc">The grid is divided into heavily outlined groups of cells called <strong>Cages</strong>. Each cage has a target number and a math operator (<strong>+, -, *, /</strong>) in the top-left corner. The numbers you place inside that cage must produce the target number using that operation.</p>
+        
+        <div class="demo-box">
+          <div class="demo-group">
+            <div class="mini-grid" style="grid-template-columns: repeat(2, 1fr);">
+              <div class="m-cell cage-demo">
+                <span class="m-cage-label">3+</span>1
+              </div>
+              <div class="m-cell cage-demo">2</div>
+            </div>
+            <div class="demo-caption">1 + 2 = 3</div>
+          </div>
+          
+          <div class="demo-group">
+            <div class="mini-grid" style="grid-template-columns: repeat(2, 1fr);">
+              <div class="m-cell" style="background:#5c2b5c;">
+                <span class="m-cage-label">6*</span>3
+              </div>
+              <div class="m-cell" style="background:#5c2b5c;">2</div>
+            </div>
+            <div class="demo-caption">3 × 2 = 6</div>
+          </div>
+          
+          <div class="demo-group">
+            <div class="mini-grid" style="grid-template-columns: 1fr;">
+              <div class="m-cell" style="background:#6b3a2b;">
+                <span class="m-cage-label">4</span>4
+              </div>
+            </div>
+            <div class="demo-caption">Freebie cell!</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tutorial-step">
+        <div class="step-header">
+          <div class="step-num">3</div>
+          <div class="step-title">Controls & Tools</div>
+        </div>
+        <p class="step-desc">KitKit is built for speed. Use your keyboard to navigate the grid instantly. If you get stuck, use your tools wisely.</p>
+        
+        <ul class="controls-list">
+          <li>
+            <div class="kbd">Arrows</div>
+            <p>Move the <span style="color:#00dfc0; font-weight: 700;">cyan selector</span> around the grid.</p>
+          </li>
+          <li>
+            <div class="kbd">1 - 9</div>
+            <p>Type a number to instantly place it in the selected cell.</p>
+          </li>
+          <li>
+            <div class="kbd">Backspace</div>
+            <p>Delete the number in the currently selected cell.</p>
+          </li>
+          <li>
+            <div class="kbd" style="background: #2f495e; color: #fff;">Hint</div>
+            <p>Costs 1 Hint point. Reveals the correct number for a random empty cell.</p>
+          </li>
+          <li>
+            <div class="kbd" style="background: #1b6b5a; color: #fff;">Check</div>
+            <p>Costs 1 Check point. Highlights any incorrect numbers currently on the board in <span style="color:#ff4d4d; font-weight:700;">red</span>.</p>
+          </li>
+        </ul>
+      </div>
+
+      <div class="tutorial-step play-now-container">
+        <h3 style="color:#fff; font-size: 2rem; margin-bottom: 20px;">Ready for the Challenge?</h3>
+        <a href="index.html" class="play-now-btn">
+          Play KitKit Now
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+    </div>
+    <div class="modal-overlay" id="authModal" onclick="closeAuthModal()">
+    <div class="auth-box" onclick="event.stopPropagation()">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Sign In</button>
+        <button class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">Register</button>
+      </div>
+      
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <input type="text" id="loginUsername" class="auth-input" placeholder="Username" required>
+        <input type="password" id="loginPassword" class="auth-input" placeholder="Password" required>
+        <div id="loginError" class="auth-error"></div>
+        <button type="submit" class="auth-submit">Sign In</button>
+      </form>
+
+      <form id="registerForm" onsubmit="handleRegister(event)" style="display: none;">
+        <input type="text" id="regUsername" class="auth-input" placeholder="Choose Username" required>
+        <input type="password" id="regPassword" class="auth-input" placeholder="Choose Password" required>
+        <div id="regError" class="auth-error"></div>
+        <button type="submit" class="auth-submit">Create Account</button>
+      </form>
+    </div>
+  </div>
+
+    <div class="modal-overlay" id="authModal" onclick="closeAuthModal()">
+    <div class="auth-box" onclick="event.stopPropagation()">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Sign In</button>
+        <button class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">Register</button>
+      </div>
+      
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <input type="text" id="loginUsername" class="auth-input" placeholder="Username" required>
+        <input type="password" id="loginPassword" class="auth-input" placeholder="Password" required>
+        <div id="loginError" class="auth-error"></div>
+        <button type="submit" class="auth-submit">Sign In</button>
+      </form>
+
+      <form id="registerForm" onsubmit="handleRegister(event)" style="display: none;">
+        <input type="text" id="regUsername" class="auth-input" placeholder="Choose Username" required>
+        <input type="password" id="regPassword" class="auth-input" placeholder="Choose Password" required>
+        <div id="regError" class="auth-error"></div>
+        <button type="submit" class="auth-submit">Create Account</button>
+      </form>
+    </div>
+  </div>
+  
+  <script>
+    // --- Scroll Reveal Animation Logic ---
+    document.addEventListener("DOMContentLoaded", () => {
+      const steps = document.querySelectorAll('.tutorial-step');
+      
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            // Optional: stop observing once it has become visible
+            // observer.unobserve(entry.target);
+          }
+        });
+      }, {
+        threshold: 0.15 // Triggers when 15% of the element is visible
+      });
+
+      steps.forEach(step => observer.observe(step));
+    });
+    // --- AUTHENTICATION LOGIC ---
+    let currentUser = null;
+
+    async function checkAuth() {
+        try {
+            const res = await fetch('/api/me');
+            const data = await res.json();
+            if (data.logged_in) {
+                updateAuthUI(data.username, data.money);
+            }
+        } catch (e) {}
+    }
+
+    function updateAuthUI(username, money) {
+        currentUser = username;
+        const signinBtn = document.getElementById('navSignInBtn');
+        if (signinBtn) {
+            signinBtn.outerHTML = `
+            <div class="profile-wrapper">
+              <button class="user-profile-btn">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                ${username}
+              </button>
+              <div class="profile-dropdown">
+                <button class="dropdown-item" onclick="logout()">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  Sign Out
+                </button>
+              </div>
+            </div>`;
+        }
+        
+        const moneyDisplay = document.querySelector('.money-badge');
+        if (moneyDisplay) {
+            moneyDisplay.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M14.5 9.5a2.5 2.5 0 0 0-5 0c0 1.38 5 1.12 5 2.5a2.5 2.5 0 0 1-5 0"/></svg> ${money}`;
+        }
+        closeAuthModal();
+    }
+
+    function openAuthModal() { document.getElementById('authModal').classList.add('active'); }
+    function closeAuthModal() { document.getElementById('authModal').classList.remove('active'); }
+    function switchAuthTab(tab) {
+        document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+        document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+        document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+        document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+        document.getElementById('loginError').textContent = '';
+        document.getElementById('regError').textContent = '';
+    }
+
+    async function handleLogin(e) {
+        e.preventDefault();
+        const res = await fetch('/api/login', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: document.getElementById('loginUsername').value, password: document.getElementById('loginPassword').value })
+        });
+        const data = await res.json();
+        if (data.success) updateAuthUI(data.username, data.money);
+        else document.getElementById('loginError').textContent = data.error;
+    }
+
+    async function handleRegister(e) {
+        e.preventDefault();
+        const res = await fetch('/api/register', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: document.getElementById('regUsername').value, password: document.getElementById('regPassword').value })
+        });
+        const data = await res.json();
+        if (data.success) updateAuthUI(data.username, data.money);
+        else document.getElementById('regError').textContent = data.error;
+    }
+
+    async function logout() {
+        await fetch('/api/logout', { method: 'POST' });
+        window.location.reload(); 
+    }
+
+    // Ping server on load
+    checkAuth();
+  </script>
+</body>
+</html>
