@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="img/favicon.png">
   <title>Tutorial · KitKit</title>
   <style>
     :root {
@@ -46,7 +47,7 @@
       content: attr(data-tooltip); position: absolute; bottom: -32px; left: 50%;
       transform: translateX(-50%); background: #333; color: #eee; padding: 6px 12px;
       border-radius: 6px; font-size: 0.75rem; white-space: nowrap; opacity: 0;
-      pointer-events: none; transition: opacity 0.2s; z-index: 10; font-weight: 600;
+      pointer-events: none; transition: opacity 0.2s; z-index: 10;
     }
     .nav-icon:hover::after { opacity: 1; }
 
@@ -74,13 +75,20 @@
       display: flex; align-items: center; justify-content: center;
       color: #ddd; box-shadow: 0 4px 12px rgba(0,0,0,0.5); cursor: pointer;
       border: 2px solid #444; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      flex-shrink: 0; position: sticky; top: 24px;
+      /* Make the button fixed */
+      position: fixed; 
+      top: 100px; 
+      left: max(20px, calc(50vw - 450px)); /* Keeps it aligned with your 900px container */
+      z-index: 90;
     }
     .back-btn svg { width: 24px; height: 24px; }
     .back-btn:hover { background: var(--osu-pink); border-color: var(--osu-pink); color: #fff; transform: scale(1.05) translateX(-3px); }
 
     /* ── Tutorial Content ── */
-    .tutorial-wrapper { flex: 1; max-width: 700px; display: flex; flex-direction: column; gap: 60px; }
+    .tutorial-wrapper { 
+      flex: 1; max-width: 700px; display: flex; flex-direction: column; gap: 60px;
+      margin: 0 auto; 
+    }
 
     .hero-section { text-align: center; margin-bottom: 20px; padding: 40px 0; border-bottom: 1px solid #222; }
     .hero-section h1 { font-size: 3.5rem; font-weight: 800; color: #fff; letter-spacing: -0.03em; margin-bottom: 16px; }
@@ -133,14 +141,6 @@
     .kbd { background: #222; border: 1px solid #555; padding: 6px 12px; border-radius: 6px; color: #fff; font-family: var(--font-mono); font-size: 0.9rem; box-shadow: 0 4px 0 #111; }
     .controls-list p { color: #aaa; font-size: 1rem; margin: 0; }
 
-    .play-now-container { text-align: center; margin-top: 40px; }
-    .play-now-btn {
-      background: var(--osu-pink); color: #000; padding: 16px 48px; border-radius: 30px;
-      font-size: 1.2rem; font-weight: 800; text-decoration: none; display: inline-flex;
-      align-items: center; gap: 12px; transition: all 0.3s;
-    }
-    .play-now-btn:hover { transform: translateY(-4px); box-shadow: 0 10px 25px rgba(255,102,170,0.3); }
-    /* ── Profile Dropdown & Auth Modal ── */
     .user-profile-btn {
       background: rgba(255,102,170,0.1); border: 1px solid var(--osu-pink);
       color: var(--osu-pink); padding: 8px 18px; border-radius: 8px;
@@ -197,6 +197,67 @@
     }
     .modal-overlay.active { visibility: visible; opacity: 1; }
 
+    /* ── Footer Styling ── */
+    .main-footer {
+      width: 100%;
+      padding: 30px 0;
+      margin-top: auto;
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    .footer-content {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .footer-left .separator {
+      color: #333;
+    }
+
+    .github-link {
+      color: #888;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: 0.2s;
+    }
+
+    .github-link svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .github-link:hover {
+      color: var(--osu-pink);
+    }
+
+    .version {
+      background: #1a1a1a;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 600px) {
+      .footer-content {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -204,12 +265,12 @@
   <div class="top-nav">
     <div class="nav-left">
       <img class="nav-logo" src="img/kitkit.png" style="cursor: pointer;" onclick="window.location.href = 'index.html';">
-      <a href="input.html" class="nav-icon" data-tooltip="Input Puzzle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></a>
-      <a href="tutorial.html" class="nav-icon active" data-tooltip="Tutorial"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></a>
+      <button class="nav-icon" data-tooltip="Input Puzzle" onclick="window.location.href='input.html'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+      <button class="nav-icon" data-tooltip="Tutorial"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></button>
+      <button class="nav-icon" data-tooltip="Leaderboard" onclick="window.location.href='leaderboard.html'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7c0 3.31 2.69 6 6 6s6-2.69 6-6V2z"/></svg></button>
       <button class="nav-icon" data-tooltip="Shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></button>
       <button class="nav-icon" data-tooltip="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
-      <a href="leaderboard.html" class="nav-icon" data-tooltip="Leaderboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7c0 3.31 2.69 6 6 6s6-2.69 6-6V2z"/></svg></a>
-    </div>
+      </div>
     <div class="nav-right">
       <button class="signin-btn" id="navSignInBtn" onclick="openAuthModal()">Sign In</button>
       <div class="money-badge">
@@ -220,9 +281,6 @@
   </div>
 
   <div class="page-layout">
-    <button class="back-btn" title="Back to Menu" onclick="window.location.href='index.html'">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-    </button>
 
     <div class="tutorial-wrapper">
       
@@ -327,61 +385,47 @@
           </li>
         </ul>
       </div>
+    </div>
+  </div>
 
-      <div class="tutorial-step play-now-container">
-        <h3 style="color:#fff; font-size: 2rem; margin-bottom: 20px;">Ready for the Challenge?</h3>
-        <a href="index.html" class="play-now-btn">
-          Play KitKit Now
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  <div class="modal-overlay" id="authModal" onclick="closeAuthModal()">
+    <div class="auth-box" onclick="event.stopPropagation()">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Sign In</button>
+        <button class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">Register</button>
+      </div>
+      
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <input type="text" id="loginUsername" class="auth-input" placeholder="Username" required>
+        <input type="password" id="loginPassword" class="auth-input" placeholder="Password" required>
+        <div id="loginError" class="auth-error"></div>
+        <button type="submit" class="auth-submit">Sign In</button>
+      </form>
+
+      <form id="registerForm" onsubmit="handleRegister(event)" style="display: none;">
+        <input type="text" id="regUsername" class="auth-input" placeholder="Choose Username" required>
+        <input type="password" id="regPassword" class="auth-input" placeholder="Choose Password" required>
+        <div id="regError" class="auth-error"></div>
+        <button type="submit" class="auth-submit">Create Account</button>
+      </form>
+    </div>
+  </div>
+
+  <footer class="main-footer">
+    <div class="footer-content">
+      <div class="footer-left">
+        <span class="version">v0.1.3-beta</span>
+        <span class="separator">|</span>
+        <a href="https://github.com/kit0719/IERG2080-final-project" target="_blank" class="github-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+          github
         </a>
       </div>
-
-    </div>
-    <div class="modal-overlay" id="authModal" onclick="closeAuthModal()">
-    <div class="auth-box" onclick="event.stopPropagation()">
-      <div class="auth-tabs">
-        <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Sign In</button>
-        <button class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">Register</button>
+      <div class="footer-right">
+        &copy; 2026 Atlantis✓ & kit0719.com
       </div>
-      
-      <form id="loginForm" onsubmit="handleLogin(event)">
-        <input type="text" id="loginUsername" class="auth-input" placeholder="Username" required>
-        <input type="password" id="loginPassword" class="auth-input" placeholder="Password" required>
-        <div id="loginError" class="auth-error"></div>
-        <button type="submit" class="auth-submit">Sign In</button>
-      </form>
-
-      <form id="registerForm" onsubmit="handleRegister(event)" style="display: none;">
-        <input type="text" id="regUsername" class="auth-input" placeholder="Choose Username" required>
-        <input type="password" id="regPassword" class="auth-input" placeholder="Choose Password" required>
-        <div id="regError" class="auth-error"></div>
-        <button type="submit" class="auth-submit">Create Account</button>
-      </form>
     </div>
-  </div>
-
-    <div class="modal-overlay" id="authModal" onclick="closeAuthModal()">
-    <div class="auth-box" onclick="event.stopPropagation()">
-      <div class="auth-tabs">
-        <button class="auth-tab active" id="tabLogin" onclick="switchAuthTab('login')">Sign In</button>
-        <button class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">Register</button>
-      </div>
-      
-      <form id="loginForm" onsubmit="handleLogin(event)">
-        <input type="text" id="loginUsername" class="auth-input" placeholder="Username" required>
-        <input type="password" id="loginPassword" class="auth-input" placeholder="Password" required>
-        <div id="loginError" class="auth-error"></div>
-        <button type="submit" class="auth-submit">Sign In</button>
-      </form>
-
-      <form id="registerForm" onsubmit="handleRegister(event)" style="display: none;">
-        <input type="text" id="regUsername" class="auth-input" placeholder="Choose Username" required>
-        <input type="password" id="regPassword" class="auth-input" placeholder="Choose Password" required>
-        <div id="regError" class="auth-error"></div>
-        <button type="submit" class="auth-submit">Create Account</button>
-      </form>
-    </div>
-  </div>
+  </footer>
   
   <script>
     // --- Scroll Reveal Animation Logic ---
