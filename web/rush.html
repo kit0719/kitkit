@@ -633,7 +633,7 @@
       const response = await fetch('/api/start', { 
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ size: gridSize })
+          body: JSON.stringify({ size: gridSize, old_session_id: currentSessionId })
       });
       puzzleData = await response.json();
       if (puzzleData.error) { showModal("Connection Error", puzzleData.error); return; }
@@ -739,13 +739,44 @@
       gameFinished = true;
       clearInterval(timerInterval);
       document.getElementById('kenkenGrid').classList.add('paused');
-      showModal('Run Ended', `
-          <div style="text-align:center">
-            <h3 style="color:var(--osu-pink);margin-bottom:10px">${reason}</h3>
-            <p style="font-size:1.2rem;margin-bottom:20px">Total Solved: <strong>${boardsSolved}</strong></p>
-            <button class="btn" style="background:var(--osu-pink);width:100%;justify-content:center" onclick="closeModal();init()">Play Again</button>
-          </div>
-      `, true);
+
+      // If the player is logged in and actually solved at least 1 board, save it!
+      if (currentUser && boardsSolved > 0 && puzzleData) {
+          fetch('/api/save_match', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ mode: 'rush', size: puzzleData.size, score: boardsSolved })
+          })
+          .then(res => res.json())
+          .then(dbData => {
+              if (dbData.success) {
+                  // Update the Top Navigation Money Badge
+                  const moneyDisplay = document.getElementById('moneyDisplay');
+                  if (moneyDisplay) {
+                      moneyDisplay.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M14.5 9.5a2.5 2.5 0 0 0-5 0c0 1.38 5 1.12 5 2.5a2.5 2.5 0 0 1-5 0"/></svg> ${dbData.new_balance}`;
+                  }
+
+                  // Show the Modal with their Payout!
+                  showModal('Run Ended', `
+                      <div style="text-align:center">
+                        <h3 style="color:var(--osu-pink);margin-bottom:10px">${reason}</h3>
+                        <p style="font-size:1.2rem;margin-bottom:10px">Total Solved: <strong>${boardsSolved}</strong></p>
+                        <p style="color:#00dfc0; font-size:1.5rem; font-weight:bold; margin-bottom:20px;">+${dbData.payout} Coins Earned!</p>
+                        <button class="btn" style="background:var(--osu-pink);width:100%;justify-content:center" onclick="closeModal();init()">Play Again</button>
+                      </div>
+                  `, true);
+              }
+          });
+      } else {
+          // Guest mode (or they solved 0 boards). Just show the normal end screen.
+          showModal('Run Ended', `
+              <div style="text-align:center">
+                <h3 style="color:var(--osu-pink);margin-bottom:10px">${reason}</h3>
+                <p style="font-size:1.2rem;margin-bottom:20px">Total Solved: <strong>${boardsSolved}</strong></p>
+                <button class="btn" style="background:var(--osu-pink);width:100%;justify-content:center" onclick="closeModal();init()">Play Again</button>
+              </div>
+          `, true);
+      }
   }
 
   function togglePause() {
@@ -851,7 +882,7 @@
         const response = await fetch('/api/start', { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ size: gridSize })
+            body: JSON.stringify({ size: gridSize, old_session_id: currentSessionId })
         });
         
         puzzleData = await response.json();

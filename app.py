@@ -51,7 +51,29 @@ def init_db():
 init_db()
 # A global variable to hold our running C process
 active_games = {}
-
+def cleanup_game(token):
+    """Safely terminates a C process and explicitly closes its OS pipelines."""
+    if token and token in active_games:
+        proc = active_games[token]
+        try:
+            # Explicitly release the file descriptors back to the OS
+            if proc.stdin: proc.stdin.close()
+            if proc.stdout: proc.stdout.close()
+            if proc.stderr: proc.stderr.close()
+            proc.terminate()
+            proc.wait(timeout=1) # Ensure the zombie process is reaped
+        except Exception:
+            pass
+            
+        del active_games[token]
+        
+        # Clean up the hard drive
+        file_path = f'test_cases/board_{token}.txt'
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except OSError:
+                pass
 @app.route('/')
 def index():
     # This will load your HTML game interface (we will build this next)
@@ -67,14 +89,17 @@ def rush_page():
 
 @app.route('/api/start', methods=['POST'])
 def start_game():
-    # 1. Generate a unique ID token for this specific player's board
-    match_token = str(uuid.uuid4())
-    
     data = request.json or {}
+    
+    # --- 1. PLUG THE LEAK: KILL THE OLD GAME ---
+    old_token = data.get('old_session_id')
+    if old_token:
+        cleanup_game(old_token)
+        
+    match_token = str(uuid.uuid4())
     size = data.get('size', 3)
     mode = data.get('mode', 'normal') 
     
-    # 2. SAFEGUARD: Ensure the folder exists so the C engine doesn't crash!
     os.makedirs('test_cases', exist_ok=True)
     unique_file_path = f'test_cases/board_{match_token}.txt'
     
@@ -86,7 +111,6 @@ def start_game():
         subprocess.run(['./kenken', '--generate', str(size)])
         os.rename(gen_file, unique_file_path)
         
-    # 3. Boot the C Engine specifically for this user
     active_games[match_token] = subprocess.Popen(
         ['./kenken', unique_file_path, '--web'],
         stdin=subprocess.PIPE, stdout=subprocess.PIPE,
@@ -94,12 +118,17 @@ def start_game():
     )
     
     initial_state = ""
+    json_started = False
+    
     for line in iter(active_games[match_token].stdout.readline, ''):
-        initial_state += line
-        if line.strip() == "}": 
-            break
+        if line.strip() == "{":
+            json_started = True
             
-    # 4. Inject the token into the JSON so the browser can save it
+        if json_started:
+            initial_state += line
+            if line.strip() == "}": 
+                break
+            
     board_data = json.loads(initial_state)
     board_data['session_id'] = match_token
     return jsonify(board_data)
@@ -120,10 +149,16 @@ def send_command():
     user_process.stdin.flush()
     
     new_state = ""
+    json_started = False
+    
     for line in iter(user_process.stdout.readline, ''):
-        new_state += line
-        if line.strip() == "}": 
-            break
+        if line.strip() == "{":
+            json_started = True  # Ignore C warnings until we see the JSON bracket
+            
+        if json_started:
+            new_state += line
+            if line.strip() == "}": 
+                break
             
     board_data = json.loads(new_state)
     board_data['session_id'] = match_token # Give the token back!

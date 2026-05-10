@@ -722,7 +722,7 @@
         const response = await fetch('/api/start', { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ size: parseInt(gridSize), mode: rawMode })
+            body: JSON.stringify({ size: parseInt(gridSize), mode: rawMode, old_session_id: currentSessionId })
         });
         
         puzzleData = await response.json();
