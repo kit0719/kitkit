@@ -2,7 +2,8 @@ from flask import Flask, request, jsonify, render_template
 import subprocess
 
 # Point Flask to your new 'web' folder for HTML and static files
-app = Flask(__name__, template_folder='web', static_folder='web')
+# This tells Flask to use 'web' for both templates AND static assets (like images)
+app = Flask(__name__, template_folder='web', static_folder='web', static_url_path='')
 
 # A global variable to hold our running C process
 game_process = None
