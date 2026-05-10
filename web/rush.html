@@ -426,6 +426,7 @@
   </footer>
 
 <script>
+  let currentSessionId = null;
   let puzzleData = null;
   let selectedRow = 0, selectedCol = 0;
   let currentUser = null;
@@ -635,6 +636,9 @@
           body: JSON.stringify({ size: gridSize })
       });
       puzzleData = await response.json();
+      if (puzzleData.error) { showModal("Connection Error", puzzleData.error); return; }
+      
+      currentSessionId = puzzleData.session_id;
       
       // Refresh resources per board in rush mode
       hintsLeft = puzzleData.size;
@@ -661,9 +665,17 @@
     const response = await fetch('/api/command', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ row: r, col: c, val: val })
+        // --- ADDED JSON. AND THE SESSION ID ---
+        body: JSON.stringify({ row: r, col: c, val: val, session_id: currentSessionId })
     });
+    
     puzzleData = await response.json();
+    
+    // --- CATCH BACKEND ERRORS ---
+    if (puzzleData.error) { 
+        showModal("Connection Error", puzzleData.error); 
+        return; 
+    }
     
     // RUSH MODE LOGIC: Automatically fetch next board when solved
     if (puzzleData.solved && !gameFinished) {
@@ -751,12 +763,21 @@
 
   async function useHint() {
       if (gameFinished || hintsLeft <= 0) return;
+      
       const response = await fetch('/api/command', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ row: 88, col: 88, val: 88 })
+          // --- SEND THE SESSION ID ---
+          body: JSON.stringify({ row: 88, col: 88, val: 88, session_id: currentSessionId }) 
       });
+      
       puzzleData = await response.json();
+
+      if (puzzleData.error) {
+          showModal("Connection Error", puzzleData.error);
+          return;
+      }
+
       if (puzzleData.hint && puzzleData.hint.ready && puzzleData.hint.val !== -1) {
           hintsLeft--;
           document.getElementById('hintCount').textContent = hintsLeft;
@@ -766,7 +787,6 @@
           showModal('Notice', 'No obvious hints available right now.');
       }
   }
-
   async function checkBoard() {
       if (gameFinished) return;
       if (checksLeft <= 0) return showModal('Notice', 'No checks left!');
@@ -835,6 +855,9 @@
         });
         
         puzzleData = await response.json();
+        if (puzzleData.error) throw new Error(puzzleData.error); // Catch crashes
+        
+        currentSessionId = puzzleData.session_id;
         
         hintsLeft = puzzleData.size;
         document.getElementById('hintCount').textContent = hintsLeft;

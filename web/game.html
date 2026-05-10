@@ -387,7 +387,8 @@
   </footer>
 
 <script>
-let puzzleData = null;
+  let currentSessionId = null;
+  let puzzleData = null;
   let selectedRow = 0, selectedCol = 0, seconds = 0, timerInterval = null;
   let hintsLeft = 5, checkLeft = 3, money = 200, isPaused = false, gameFinished = false;
   let cageMap = [];
@@ -533,11 +534,10 @@ let puzzleData = null;
     const response = await fetch('/api/command', { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // Add mode: rawMode right here!
-        body: JSON.stringify({ row: r, col: c, val: val })
+        body: JSON.stringify({ row: r, col: c, val: val, session_id: currentSessionId }) // ADD TOKEN
     });
-    
     puzzleData = await response.json();
+    if (puzzleData.error) { showModal("Error", puzzleData.error); return; }
     
     if (puzzleData.solved && !gameFinished) {
         gameFinished = true;
@@ -625,13 +625,20 @@ let puzzleData = null;
   async function useHint() {
       if (gameFinished || hintsLeft <= 0) return;
       
-      // Trigger the background C thread
+      // Trigger the background C thread (NOW SECURED WITH SESSION ID)
       const response = await fetch('/api/command', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ row: 88, col: 88, val: 88 })
+          body: JSON.stringify({ row: 88, col: 88, val: 88, session_id: currentSessionId }) 
       });
+      
       puzzleData = await response.json();
+
+      // Catch backend errors before they freeze the board
+      if (puzzleData.error) {
+          showModal("Connection Error", puzzleData.error);
+          return;
+      }
 
       if (puzzleData.hint && puzzleData.hint.ready && puzzleData.hint.val !== -1) {
           hintsLeft--;
@@ -685,7 +692,7 @@ let puzzleData = null;
       <div style="text-align:left">
         <p style="margin-bottom:20px">Your progress will be lost. Are you sure you want to return to the main menu?</p>
         <div style="display:flex;gap:12px;justify-content:center">
-          <button class="btn" style="background:var(--osu-pink);flex:1;justify-content:center" onclick="window.location.href='index.html'">Leave</button>
+          <button class="btn" style="background:var(--osu-pink);flex:1;justify-content:center" onclick="fetch('/api/stop', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({session_id: currentSessionId})}).then(() => window.location.href='index.html')">Leave</button>
           <button class="btn" style="background:#444;flex:1;justify-content:center" onclick="closeModal()">Stay</button>
         </div>
       </div>
@@ -719,6 +726,9 @@ let puzzleData = null;
         });
         
         puzzleData = await response.json();
+        if (puzzleData.error) throw new Error(puzzleData.error);
+        
+        currentSessionId = puzzleData.session_id;
         
                 hintsLeft = puzzleData.size;
         document.getElementById('hintCount').textContent = hintsLeft;
